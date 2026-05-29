@@ -46,6 +46,37 @@
       <div id="linkText" class="link"></div>
     </div>
   </div>
+
+<!-- 右上角：金币 + 打赏按钮 -->
+<div style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; align-items: center; gap: 12px;">
+  <!-- 金币 -->
+  <div style="display: flex; align-items: center; background: linear-gradient(135deg, #ffd700, #ffaa00); padding: 6px 12px; border-radius: 20px; box-shadow: 0 2px 8px rgba(255,170,0,0.4);">
+    <span style="font-size: 18px; margin-right: 6px;">🪙</span>
+    <span id="coinNum" style="color: #fff; font-weight: bold; font-size: 16px;">1258</span>
+  </div>
+
+  <!-- 打赏按钮 -->
+  <button id="donateBtn" style="background: linear-gradient(135deg, #ff6b81, #ff4757); color: #fff; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 10px rgba(255,71,87,0.4); transition: transform 0.2s;">
+    💰 打赏支持
+  </button>
+</div>
+
+<!-- 打赏弹窗（默认隐藏） -->
+<div id="donateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+  <div style="background: #fff; border-radius: 16px; padding: 24px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); position: relative;">
+    <!-- 关闭按钮 -->
+    <button id="closeModal" style="position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 22px; cursor: pointer; color: #888;">×</button>
+
+    <h3 style="margin: 0 0 10px; font-size: 20px; color: #333;">✨ 请我喝杯咖啡 ✨</h3>
+    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">您的支持是我更新的最大动力！</p>
+
+    <!-- 二维码图（放在网页同目录，命名 reward-qr.png） -->
+    <img src="reward-qr.png" alt="微信/支付宝收款码" style="width: 220px; height: 220px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+
+    <p style="margin-top: 16px; font-size: 13px; color: #999;">微信 / 支付宝 均可扫码</p>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -125,5 +156,32 @@
     if (d.ok) location.reload();
   }
 </script>
+
+<script>
+  // 打赏弹窗
+  const donateBtn=document.getElementById('donateBtn');
+  const donateModal=document.getElementById('donateModal');
+  const closeModal=document.getElementById('closeModal');
+
+  donateBtn.addEventListener('click', () => {
+    donateModal.style.display='flex';
+  });
+
+  closeModal.addEventListener('click', () => {
+    donateModal.style.display='none';
+  });
+
+  // 点击遮罩关闭
+  donateModal.addEventListener('click', (e) => {
+    if (e.target === donateModal) {
+      donateModal.style.display='none';
+    }
+  });
+
+  // 金币数量示例（你可以动态改）
+  // document.getElementById('coinNum').innerText = 2026;
+</script>
+
+
 </body>
 </html>
