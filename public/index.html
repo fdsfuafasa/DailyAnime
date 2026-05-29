@@ -1,66 +1,165 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<title>测试 D1</title>
+<meta charset="UTF-8">
+<title>登录 / 注册 / 找回密码</title>
+<style>
+  body{font-family:Arial;padding:30px;max-width:380px;margin:0 auto}
+  input{width:100%;margin:6px 0;padding:10px;border:1px solid #ddd;border-radius:6px}
+  button{width:100%;padding:10px;margin:6px 0;background:#0066ff;color:white;border:none;border-radius:6px}
+  .tab{display:flex;gap:10px;margin-bottom:20px}
+  .tab button{flex:1;background:#f0f0f0;color:#333}
+  .tab button.active{background:#0066ff;color:white}
+  .page{display:none}
+  .page.active{display:block}
+  #msg{margin-top:12px;font-size:14px}
+  .err{color:red}
+  .ok{color:green}
+  a{color:#0066ff;font-size:14px;cursor:pointer}
+</style>
 </head>
+
 <body>
-<h1>测试数据库 test 表</h1>
+<h2>账号系统</h2>
 
-<div>
-  <input id="test1" placeholder="test1 (文本)">
-  <input id="test2" type="number" placeholder="test2 (数字)">
-</div>
-<div style="margin: 10px 0;">
-  <button onclick="add()">添加</button>
-  <button onclick="getAll()">查询所有</button>
-  <button onclick="update()">更新</button>
-  <button onclick="del()">删除</button>
+<div class="tab">
+  <button class="tbtn active" data-page="login">登录</button>
+  <button class="tbtn" data-page="register">注册</button>
 </div>
 
-<pre id="res"></pre>
+<!-- ====================== 登录 ====================== -->
+<div class="page active" id="login">
+  <input placeholder="用户名" id="login_user">
+  <input type="password" placeholder="密码" id="login_pwd">
+  <button onclick="login()">登录</button>
+  <button onclick="guest()">游客模式</button>
+  <a onclick="showPage('forgot')">忘记密码？</a>
+</div>
+
+<!-- ====================== 注册 ====================== -->
+<div class="page" id="register">
+  <input placeholder="用户名" id="reg_user">
+  <input type="password" placeholder="密码" id="reg_pwd">
+  <input type="password" placeholder="确认密码" id="reg_pwd2">
+  <input placeholder="邮箱" id="reg_email">
+  <input placeholder="确认邮箱" id="reg_email2">
+  <button onclick="register()">注册</button>
+</div>
+
+<!-- ====================== 找回密码 ====================== -->
+<div class="page" id="forgot">
+  <input placeholder="用户名" id="fg_user">
+  <input placeholder="邮箱" id="fg_email">
+  <button onclick="forgot()">下一步（验证）</button>
+  <a onclick="showPage('login')">返回登录</a>
+</div>
+
+<!-- ====================== 重置密码 ====================== -->
+<div class="page" id="reset">
+  <input disabled placeholder="用户名" id="reset_user">
+  <input type="password" placeholder="新密码" id="reset_pwd">
+  <input type="password" placeholder="确认新密码" id="reset_pwd2">
+  <button onclick="resetPassword()">重置密码</button>
+  <a onclick="showPage('login')">返回登录</a>
+</div>
+
+<div id="msg"></div>
 
 <script>
-async function add() {
-  const test1 = document.getElementById('test1').value;
-  const test2 = document.getElementById('test2').value;
-  const res = await fetch('/api/users', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ test1, test2 })
-  });
-  const data = await res.json();
-  res.textContent = JSON.stringify(data, null, 2);
-}
+  let currentUsername = "";
 
-async function getAll() {
-  const res = await fetch('/api/users');
-  const data = await res.json();
-  document.getElementById('res').textContent = JSON.stringify(data, null, 2);
-}
+  // 切换页面
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tbtn').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    setMsg("");
+  }
 
-async function update() {
-  const test1 = document.getElementById('test1').value;
-  const test2 = document.getElementById('test2').value;
-  const res = await fetch('/api/update', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ test1, test2 })
+  document.querySelectorAll('.tbtn').forEach(t => {
+    t.onclick = () => showPage(t.dataset.page);
   });
-  const data = await res.json();
-  document.getElementById('res').textContent = JSON.stringify(data, null, 2);
-}
 
-async function del() {
-  const test1 = document.getElementById('test1').value;
-  const res = await fetch('/api/delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ test1 })
-  });
-  const data = await res.json();
-  document.getElementById('res').textContent = JSON.stringify(data, null, 2);
-}
+  function setMsg(text, ok=false) {
+    const m = document.getElementById('msg');
+    m.innerText = text;
+    m.className = ok ? "ok" : "err";
+  }
+
+  // ==================================
+  // 登录
+  // ==================================
+  async function login() {
+    const username = document.getElementById('login_user').value;
+    const password = document.getElementById('login_pwd').value;
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    const d = await res.json();
+    setMsg(d.msg, d.ok);
+  }
+
+  // ==================================
+  // 注册
+  // ==================================
+  async function register() {
+    const username = document.getElementById('reg_user').value;
+    const password = document.getElementById('reg_pwd').value;
+    const confirmPassword = document.getElementById('reg_pwd2').value;
+    const email = document.getElementById('reg_email').value;
+    const confirmEmail = document.getElementById('reg_email2').value;
+
+    const res = await fetch('/api/register', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password, confirmPassword, email, confirmEmail })
+    });
+    const d = await res.json();
+    setMsg(d.msg, d.ok);
+  }
+
+  // ==================================
+  // 忘记密码（验证用户名+邮箱）
+  // ==================================
+  async function forgot() {
+    const username = document.getElementById('fg_user').value;
+    const email = document.getElementById('fg_email').value;
+    const res = await fetch('/api/forgot', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, email })
+    });
+    const d = await res.json();
+    setMsg(d.msg, d.ok);
+    if (d.ok) {
+      currentUsername = username;
+      document.getElementById('reset_user').value = username;
+      setTimeout(()=>showPage('reset'),800);
+    }
+  }
+
+  // ==================================
+  // 重置密码
+  // ==================================
+  async function resetPassword() {
+    const newPassword = document.getElementById('reset_pwd').value;
+    const confirmPassword = document.getElementById('reset_pwd2').value;
+    const res = await fetch('/api/reset', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username: currentUsername, newPassword, confirmPassword })
+    });
+    const d = await res.json();
+    setMsg(d.msg, d.ok);
+    if (d.ok) setTimeout(()=>showPage('login'),1000);
+  }
+
+  // ==================================
+  // 游客
+  // ==================================
+  async function guest() {
+    const r = await fetch('/api/guest');
+    const d = await r.json();
+    setMsg(d.msg, true);
+  }
 </script>
 </body>
 </html>
