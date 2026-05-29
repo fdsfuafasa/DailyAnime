@@ -99,11 +99,9 @@
   const d = await res.json();
   setMsg(d.msg, d.ok);
   
-  // 登录成功 → 跳转到主页
   if (d.ok) {
-    setTimeout(() => {
-      location.href = "/home.html";  // 跳主页
-    }, 800);
+    localStorage.setItem("loginUser", username); // 保存登录
+    setTimeout(() => location.href = "/home.html", 800);
   }
 }
 

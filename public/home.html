@@ -2,32 +2,91 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>系统主页</title>
+<title>每日签到主页</title>
 <style>
-  body{font-family:Arial;padding:40px;max-width:600px;margin:0 auto;text-align:center}
-  .box{padding:30px;background:#f7f9fc;border-radius:12px}
-  button{padding:10px 20px;background:#0066ff;color:white;border:none;border-radius:6px;margin-top:20px}
+  *{box-sizing:border-box}
+  body{font-family:Arial;padding:40px;margin:0;background:#f7f9fc}
+  .container{max-width:500px;margin:0 auto;background:white;padding:30px;border-radius:16px}
+  h1{color:#222}
+  .info{font-size:18px;margin:10px 0}
+  button{width:100%;padding:14px;background:#0066ff;color:white;border:none;border-radius:8px;font-size:16px;margin-top:10px}
+  .logout{background:#666}
+  .modal{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.4);display:none;justify-content:center;align-items:center
+  }
+  .modal-box{background:white;padding:30px;border-radius:12px;width:90%;max-width:380px;text-align:center}
+  .modal button{margin-top:20px}
 </style>
 </head>
 
 <body>
-  <div class="box">
-    <h1>欢迎回来！</h1>
-    <h3>你已成功登录系统</h3>
-    <p>这里是主页内容，后续可以在这里添加你的功能：</p>
-    <p>• 个人中心</p>
-    <p>• 数据管理</p>
-    <p>• 观看记录</p>
-    <p>• 会员功能</p>
+<div class="container">
+  <h1>欢迎回来！</h1>
+  <div class="info">用户名：<span id="username">-</span></div>
+  <div class="info">当前金币：🪙 <span id="coins">0</span></div>
 
-    <button onclick="logout()">退出登录</button>
+  <button id="signBtn" onclick="openSign()">每日签到（+1金币）</button>
+  <button class="logout" onclick="logout()">退出登录</button>
+</div>
+
+<!-- 签到弹窗 -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h2 id="modalTitle">每日签到</h2>
+    <p id="modalMsg"></p>
+    <button onclick="closeModal()">确定</button>
   </div>
+</div>
 
-  <script>
-    // 退出登录 → 返回登录页
-    function logout() {
-      location.href = "index.html";
+<script>
+  const username = localStorage.getItem("loginUser");
+  if (!username) { location.href = "/index.html"; }
+
+  document.getElementById("username").innerText = username;
+
+  // 加载金币
+  loadUserInfo();
+
+  // 加载用户信息
+  async function loadUserInfo() {
+    const res = await fetch("/api/userinfo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById("coins").innerText = data.user.coins;
     }
-  </script>
+  }
+
+  // 打开签到弹窗
+  async function openSign() {
+    const res = await fetch("/api/sign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    });
+    const data = await res.json();
+
+    document.getElementById("modalTitle").innerText = data.ok ? "签到成功" : "提示";
+    document.getElementById("modalMsg").innerText = data.msg;
+    document.getElementById("modal").style.display = "flex";
+
+    if (data.ok) {
+      document.getElementById("coins").innerText = data.coins;
+    }
+  }
+
+  function closeModal() {
+    document.getElementById("modal").style.display = "none";
+  }
+
+  function logout() {
+    localStorage.removeItem("loginUser");
+    location.href = "/index.html";
+  }
+</script>
 </body>
 </html>
