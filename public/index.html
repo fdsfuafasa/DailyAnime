@@ -7,10 +7,16 @@
 <body>
 <h1>测试数据库 test 表</h1>
 
-<input id="test1" placeholder="test1 (文本)"><br>
-<input id="test2" type="number" placeholder="test2 (数字)"><br>
-<button onclick="add()">添加</button>
-<button onclick="get()">查询所有</button>
+<div>
+  <input id="test1" placeholder="test1 (文本)">
+  <input id="test2" type="number" placeholder="test2 (数字)">
+</div>
+<div style="margin: 10px 0;">
+  <button onclick="add()">添加</button>
+  <button onclick="getAll()">查询所有</button>
+  <button onclick="update()">更新</button>
+  <button onclick="del()">删除</button>
+</div>
 
 <pre id="res"></pre>
 
@@ -18,19 +24,40 @@
 async function add() {
   const test1 = document.getElementById('test1').value;
   const test2 = document.getElementById('test2').value;
-
   const res = await fetch('/api/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ test1, test2 })
   });
+  const data = await res.json();
+  res.textContent = JSON.stringify(data, null, 2);
+}
 
+async function getAll() {
+  const res = await fetch('/api/users');
   const data = await res.json();
   document.getElementById('res').textContent = JSON.stringify(data, null, 2);
 }
 
-async function get() {
-  const res = await fetch('/api/users');
+async function update() {
+  const test1 = document.getElementById('test1').value;
+  const test2 = document.getElementById('test2').value;
+  const res = await fetch('/api/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ test1, test2 })
+  });
+  const data = await res.json();
+  document.getElementById('res').textContent = JSON.stringify(data, null, 2);
+}
+
+async function del() {
+  const test1 = document.getElementById('test1').value;
+  const res = await fetch('/api/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ test1 })
+  });
   const data = await res.json();
   document.getElementById('res').textContent = JSON.stringify(data, null, 2);
 }
