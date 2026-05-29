@@ -146,14 +146,23 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   }
   .donate-close {
-    position: absolute;
-    top: 16px;
-    right: 18px;
-    font-size: 24px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #999;
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  font-size: 26px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #000;
+  font-weight: bold;
+  /* 限制点击区域仅图标本身 */
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
   }
   .donate-title {
     font-size: 22px;
@@ -217,7 +226,7 @@
 <!-- 打赏弹窗 -->
 <div id="donateModal">
   <div class="donate-card">
-    <button class="donate-close" onclick="closeDonate()" style="color: #000; font-weight: bold; font-size: 26px;">✕</button>
+    <button class="donate-close" onclick="closeDonate()">✕</button>
     <div class="donate-title">💖 感谢支持</div>
     <div class="donate-desc">您的鼓励是我持续更新的动力</div>
     <img src="pay.jpg" class="donate-img" alt="收款码">
@@ -309,6 +318,12 @@
   function closeDonate() {
     document.getElementById("donateModal").style.display = "none";
   }
+  // 点击遮罩层关闭打赏弹窗
+    document.getElementById('donateModal').addEventListener('click', function(e){
+  if(e.target === this){
+    closeDonate();
+  }
+});
 </script>
 </body>
 </html>
