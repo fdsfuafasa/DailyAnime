@@ -1,68 +1,63 @@
-import { DurableObject } from "cloudflare:workers";
-
 /**
- * Welcome to Cloudflare Workers! This is your first Durable Objects application.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your Durable Object in action
- * - Run `npm run deploy` to publish your application
- *
- * Learn more at https://developers.cloudflare.com/durable-objects
+ * 测试 D1 数据库：user 表（id TEXT, num INTEGER）
+ * 提供增删改查接口 + 静态页面
  */
-
-/**
- * Env provides a mechanism to reference bindings declared in wrangler.jsonc within JavaScript
- *
- * @typedef {Object} Env
- * @property {DurableObjectNamespace} MY_DURABLE_OBJECT - The Durable Object namespace binding
- */
-
-/** A Durable Object's behavior is defined in an exported Javascript class */
-export class MyDurableObject extends DurableObject {
-	/**
-	 * The constructor is invoked once upon creation of the Durable Object, i.e. the first call to
-	 * 	`DurableObjectStub::get` for a given identifier (no-op constructors can be omitted)
-	 *
-	 * @param {DurableObjectState} ctx - The interface for interacting with Durable Object state
-	 * @param {Env} env - The interface to reference bindings declared in wrangler.jsonc
-	 */
-	constructor(ctx, env) {
-		super(ctx, env);
-	}
-
-	/**
-	 * The Durable Object exposes an RPC method sayHello which will be invoked when a Durable
-	 *  Object instance receives a request from a Worker via the same method invocation on the stub
-	 *
-	 * @param {string} name - The name provided to a Durable Object instance from a Worker
-	 * @returns {Promise<string>} The greeting to be sent back to the Worker
-	 */
-	async sayHello(name) {
-		return `Hello, ${name}!`;
-	}
-}
-
 export default {
-	/**
-	 * This is the standard fetch handler for a Cloudflare Worker
-	 *
-	 * @param {Request} request - The request submitted to the Worker from the client
-	 * @param {Env} env - The interface to reference bindings declared in wrangler.jsonc
-	 * @param {ExecutionContext} ctx - The execution context of the Worker
-	 * @returns {Promise<Response>} The response to be sent back to the client
-	 */
-	async fetch(request, env, ctx) {
-		// Create a stub to open a communication channel with the Durable Object
-		// instance named "foo".
-		//
-		// Requests from all Workers to the Durable Object instance named "foo"
-		// will go to a single remote Durable Object instance.
-		const stub = env.MY_DURABLE_OBJECT.getByName("foo");
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const method = request.method;
 
-		// Call the `sayHello()` RPC method on the stub to invoke the method on
-		// the remote Durable Object instance.
-		const greeting = await stub.sayHello("world");
+    // 1. 查询所有用户
+    if (path === "/api/users" && method === "GET") {
+      try {
+        const { results } = await env.DB.prepare("SELECT id, num FROM user").all();
+        return Response.json(results);
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
 
-		return new Response(greeting);
-	}
+    // 2. 新增用户
+    if (path === "/api/users" && method === "POST") {
+      try {
+        const { id, num } = await request.json();
+        await env.DB.prepare("INSERT INTO user (id, num) VALUES (?, ?)")
+          .bind(id, num)
+          .run();
+        return Response.json({ ok: true, msg: "添加成功" });
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // 3. 更新用户
+    if (path === "/api/users/update" && method === "POST") {
+      try {
+        const { id, num } = await request.json();
+        await env.DB.prepare("UPDATE user SET num = ? WHERE id = ?")
+          .bind(num, id)
+          .run();
+        return Response.json({ ok: true, msg: "更新成功" });
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // 4. 删除用户
+    if (path === "/api/users/delete" && method === "POST") {
+      try {
+        const { id } = await request.json();
+        await env.DB.prepare("DELETE FROM user WHERE id = ?")
+          .bind(id)
+          .run();
+        return Response.json({ ok: true, msg: "删除成功" });
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 500 });
+      }
+    }
+
+    // 返回 public/index.html
+    return env.ASSETS.fetch(request);
+  }
 };
