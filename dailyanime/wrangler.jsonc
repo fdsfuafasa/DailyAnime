@@ -7,6 +7,18 @@
 	"name": "dailyanime",
 	"main": "src/index.js",
 	"compatibility_date": "2026-05-29",
+
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "dailyanime-db",
+			"database_id": "8683811f-f95f-46a2-ad6a-2ed9919c02ae"
+		}
+	],
+
+
+
+	
 	"assets": {
 		// The path to the directory containing the `index.html` file to be served at `/`
 		"directory": "./public"
