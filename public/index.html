@@ -90,15 +90,22 @@
   // 登录
   // ==================================
   async function login() {
-    const username = document.getElementById('login_user').value;
-    const password = document.getElementById('login_pwd').value;
-    const res = await fetch('/api/login', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username, password })
-    });
-    const d = await res.json();
-    setMsg(d.msg, d.ok);
+  const username = document.getElementById('login_user').value;
+  const password = document.getElementById('login_pwd').value;
+  const res = await fetch('/api/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ username, password })
+  });
+  const d = await res.json();
+  setMsg(d.msg, d.ok);
+  
+  // 登录成功 → 跳转到主页
+  if (d.ok) {
+    setTimeout(() => {
+      location.href = "/home.html";  // 跳主页
+    }, 800);
   }
+}
 
   // ==================================
   // 注册
@@ -156,10 +163,11 @@
   // 游客
   // ==================================
   async function guest() {
-    const r = await fetch('/api/guest');
-    const d = await r.json();
-    setMsg(d.msg, true);
-  }
+  const r = await fetch('/api/guest');
+  const d = await r.json();
+  setMsg(d.msg, true);
+  setTimeout(()=>location.href="/home.html",800);
+}
 </script>
 </body>
 </html>

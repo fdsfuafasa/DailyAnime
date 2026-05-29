@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>系统主页</title>
+<style>
+  body{font-family:Arial;padding:40px;max-width:600px;margin:0 auto;text-align:center}
+  .box{padding:30px;background:#f7f9fc;border-radius:12px}
+  button{padding:10px 20px;background:#0066ff;color:white;border:none;border-radius:6px;margin-top:20px}
+</style>
+</head>
+
+<body>
+  <div class="box">
+    <h1>欢迎回来！</h1>
+    <h3>你已成功登录系统</h3>
+    <p>这里是主页内容，后续可以在这里添加你的功能：</p>
+    <p>• 个人中心</p>
+    <p>• 数据管理</p>
+    <p>• 观看记录</p>
+    <p>• 会员功能</p>
+
+    <button onclick="logout()">退出登录</button>
+  </div>
+
+  <script>
+    // 退出登录 → 返回登录页
+    function logout() {
+      location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
