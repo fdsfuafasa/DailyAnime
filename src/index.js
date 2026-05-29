@@ -4,28 +4,40 @@ export default {
       const url = new URL(request.url);
       const method = request.method;
 
-      // 查询所有
+      // 查询全部
       if (url.pathname === "/api/users" && method === "GET") {
         const { results } = await env.DB.prepare("SELECT * FROM test").all();
         return Response.json(results);
       }
 
-      // 新增
+      // 新增数据
       if (url.pathname === "/api/users" && method === "POST") {
-        const body = await request.json();
-        const test1 = body.test1;
-        const test2 = body.test2;
-
-        await env.DB.prepare(
-          "INSERT INTO test (test1, test2) VALUES (?, ?)"
-        ).bind(test1, test2).run();
-
+        const { test1, test2 } = await request.json();
+        await env.DB.prepare("INSERT INTO test (test1, test2) VALUES (?, ?)")
+          .bind(test1, test2).run();
         return Response.json({ ok: true, msg: "添加成功" });
       }
 
-      return new Response("运行正常", { status: 200 });
+      // 更新数据（根据 test1 匹配）
+      if (url.pathname === "/api/update" && method === "POST") {
+        const { test1, test2 } = await request.json();
+        await env.DB.prepare("UPDATE test SET test2 = ? WHERE test1 = ?")
+          .bind(test2, test1).run();
+        return Response.json({ ok: true, msg: "更新成功" });
+      }
+
+      // 删除数据（根据 test1 匹配）
+      if (url.pathname === "/api/delete" && method === "POST") {
+        const { test1 } = await request.json();
+        await env.DB.prepare("DELETE FROM test WHERE test1 = ?")
+          .bind(test1).run();
+        return Response.json({ ok: true, msg: "删除成功" });
+      }
+
+      // 走静态页面
+      return env.ASSETS.fetch(request);
     } catch (err) {
-      return Response.json({ error: err.message }, { status: 200 });
+      return Response.json({ error: err.message }, { status: 500 });
     }
   }
 };
