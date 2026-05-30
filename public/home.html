@@ -140,9 +140,9 @@
     const button = document.getElementById('topActionButton');
     if (!user) {
       document.getElementById("user").innerText = "未登录";
-      document.getElementById("coins").innerText = 0;
-      button.innerText = "登录/注册";
-      button.onclick = () => location.href = "/index.html";
+        document.getElementById("coins").innerText = 0;
+        button.innerText = "登录/注册";
+        button.onclick = () => location.href = "/register.html";
       loadItems();
       return;
     }
@@ -205,7 +205,7 @@
 
   async function buy(itemId, type) {
     if (!user) {
-      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/index.html';
+      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/register.html';
       return;
     }
     const price = 1;
@@ -227,7 +227,7 @@
 
   async function showLink(itemId, type) {
     if (!user) {
-      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/index.html';
+      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/register.html';
       return;
     }
     const r = await fetch("/api/items");
