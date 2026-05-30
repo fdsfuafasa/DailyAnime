@@ -47,14 +47,22 @@ export default {
         return Response.json({ ok: true, msg: "密码重置成功！" });
       }
 
-      // 用户信息（金币 + 已购类型）
+      // 用户信息（金币 + 邮箱 + 已购类型）
       if (url.pathname === "/api/userinfo" && method === "POST") {
         const { username } = await request.json();
-        const user = await env.DB.prepare("SELECT username, coins FROM users WHERE username=?").bind(username).first();
+        const user = await env.DB.prepare("SELECT username, email, coins FROM users WHERE username=?").bind(username).first();
         const items = await env.DB.prepare("SELECT item_id, type FROM user_items WHERE username=?").bind(username).all();
         // 返回已购买数组，包含 item_id 与 type
         const bought = items.results.map(i => ({ item_id: i.item_id, type: i.type }));
         return Response.json({ ok: true, user, bought });
+      }
+
+      // 发送留言
+      if (url.pathname === "/api/message" && method === "POST") {
+        const { username, email, text, time } = await request.json();
+        if (!username || !email || !text || !time) return Response.json({ ok: false, msg: "请填写完整留言信息" });
+        await env.DB.prepare("INSERT INTO message (username, email, text, time) VALUES (?,?,?,?)").bind(username, email, text, time).run();
+        return Response.json({ ok: true, msg: "留言已发送" });
       }
 
       // 签到
