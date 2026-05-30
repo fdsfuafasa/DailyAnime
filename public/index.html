@@ -142,6 +142,9 @@
     });
     const d = await res.json();
     setMsg(d.msg, d.ok);
+    if (d.ok) {
+      setTimeout(() => showPage('login'), 800);
+    }
   }
 
   // ==================================

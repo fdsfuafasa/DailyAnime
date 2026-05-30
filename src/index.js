@@ -10,9 +10,11 @@ export default {
         if (!username || !password || !email) return Response.json({ ok: false, msg: "请填写所有字段" });
         if (password !== confirmPassword) return Response.json({ ok: false, msg: "两次密码不一致" });
         if (email !== confirmEmail) return Response.json({ ok: false, msg: "两个邮箱不一致" });
-        const exists = await env.DB.prepare("SELECT username FROM users WHERE username = ?").bind(username).first();
-        if (exists) return Response.json({ ok: false, msg: "用户名已存在" });
-        await env.DB.prepare("INSERT INTO users (username, password, email, coins) VALUES (?,?,?,0)").bind(username, password, email).run();
+        const existsUsername = await env.DB.prepare("SELECT username FROM users WHERE username = ?").bind(username).first();
+        if (existsUsername) return Response.json({ ok: false, msg: "用户名已存在" });
+        const existsEmail = await env.DB.prepare("SELECT email FROM users WHERE email = ?").bind(email).first();
+        if (existsEmail) return Response.json({ ok: false, msg: "邮箱已存在" });
+        await env.DB.prepare("INSERT INTO users (username, password, email, coins) VALUES (?,?,?,5)").bind(username, password, email).run();
         return Response.json({ ok: true, msg: "注册成功" });
       }
 
