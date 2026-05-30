@@ -18,9 +18,9 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{margin:0;padding:0;background:linear-gradient(180deg,#f7fbff,#eef4ff);color:var(--text);font-family:"Segoe UI",system-ui,Arial,sans-serif;min-height:100vh;}
   .container{max-width:500px;margin:0 auto;padding:20px 16px 24px;}
-  .top{background:var(--surface);padding:18px 16px;border-radius:26px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow);}
-  .top div{font-size:0.95rem;font-weight:700;}
-  .top button{border:none;background:#e2e8f0;color:var(--text);padding:10px 14px;border-radius:16px;font-weight:700;cursor:pointer;}
+  .top{background:var(--surface);padding:18px 16px;border-radius:26px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;box-shadow:var(--shadow);}
+  .top .user-name{width:100%;font-size:0.95rem;font-weight:700;word-break:break-word;}
+  .top button{width:auto;border:none;background:#e2e8f0;color:var(--text);padding:8px 12px;border-radius:14px;font-weight:700;font-size:0.88rem;cursor:pointer;min-width:110px;}
   .top-right{position:sticky;top:14px;display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:16px;z-index:10;}
   .coin-box{background:linear-gradient(135deg,#ffd700,#ff9500);color:#fff;padding:10px 14px;border-radius:999px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 12px 28px rgba(255,149,0,.18);}
   .donate-btn{background:linear-gradient(135deg,#ff6699,#ff3366);color:#fff;border:none;padding:10px 16px;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px rgba(255,51,102,.18);}
@@ -65,8 +65,8 @@
 
   <!-- 顶部信息 -->
   <div class="top">
-    <div>用户：<span id="user">-</span></div>
-    <button onclick="location.href='/index.html'">退出登录</button>
+    <div class="user-name">用户：<span id="user">-</span></div>
+    <button id="topActionButton">退出登录</button>
   </div>
 
 <!-- 签到 -->
@@ -102,15 +102,32 @@
 
 <script>
   const user = localStorage.getItem("loginUser");
-  if (!user) location.href = "/index.html";
-
   let userCoins = 0;
   const boughtMap = {};
 
-  window.onload = loadAll;
+  window.onload = initPage;
 
-  async function loadAll() {
-    document.getElementById("user").innerText = user;
+  async function initPage() {
+    const button = document.getElementById('topActionButton');
+    if (!user) {
+      document.getElementById("user").innerText = "未登录";
+      document.getElementById("coins").innerText = 0;
+      button.innerText = "登录/注册";
+      button.onclick = () => location.href = "/index.html";
+      loadItems();
+      return;
+    }
+
+    button.innerText = "退出登录";
+    button.onclick = () => {
+      localStorage.removeItem('loginUser');
+      location.reload();
+    };
+    await loadUserInfo();
+    loadItems();
+  }
+
+  async function loadUserInfo() {
     const u = await fetch("/api/userinfo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user }) });
     const d = await u.json();
     if (d.ok) {
@@ -121,9 +138,9 @@
         if (!boughtMap[id]) boughtMap[id] = [];
         boughtMap[id].push(t);
       });
+      document.getElementById("user").innerText = user;
       document.getElementById("coins").innerText = userCoins;
     }
-    loadItems();
   }
 
   async function loadItems() {
@@ -153,6 +170,10 @@
   }
 
   async function buy(itemId, type) {
+    if (!user) {
+      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/index.html';
+      return;
+    }
     const price = 1;
     if (userCoins < price) return alert("金币不足");
     const labels = ['原版','剪辑','无码'];
@@ -163,12 +184,18 @@
     alert(d.msg);
     if (d.ok) {
       userCoins = d.coins !== undefined ? d.coins : userCoins - price;
+      if (!boughtMap[itemId]) boughtMap[itemId] = [];
+      if (!boughtMap[itemId].includes(type)) boughtMap[itemId].push(type);
       document.getElementById('coins').innerText = userCoins;
       loadItems();
     }
   }
 
   async function showLink(itemId, type) {
+    if (!user) {
+      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/index.html';
+      return;
+    }
     const r = await fetch("/api/items");
     const data = await r.json();
     const item = data.items.find(i => i.id == itemId);
