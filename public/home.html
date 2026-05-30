@@ -150,7 +150,7 @@
     dom.innerHTML = "";
     data.items.forEach(it => {
       let buttonsHtml = "";
-      const labels = ['原版','剪辑','无码'];
+      const labels = ['原版','剪辑','破解'];
       for (let t = 1; t <= 3; t++) {
         const field = it[`link_${t}`];
         if (!field || field.toString().trim() === '') continue;
@@ -176,7 +176,7 @@
     }
     const price = 1;
     if (userCoins < price) return alert("金币不足");
-    const labels = ['原版','剪辑','无码'];
+    const labels = ['原版','剪辑','破解'];
     const choice = labels[type - 1] || '该类型';
     if (!confirm(`确认花费 1 金币购买 ${choice} 吗？`)) return;
     const r = await fetch("/api/buy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user, item_id: itemId, type }) });
