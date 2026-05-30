@@ -105,20 +105,22 @@
   if (!user) location.href = "/index.html";
 
   let userCoins = 0;
-  let boughtItems = [];
+  const boughtMap = {};
 
   window.onload = loadAll;
 
   async function loadAll() {
     document.getElementById("user").innerText = user;
-    const u = await fetch("/api/userinfo", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: user })
-    });
+    const u = await fetch("/api/userinfo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user }) });
     const d = await u.json();
     if (d.ok) {
       userCoins = d.user.coins;
-      boughtItems = d.bought;
+      (d.bought || []).forEach(b => {
+        const id = b.item_id;
+        const t = Number(b.type);
+        if (!boughtMap[id]) boughtMap[id] = [];
+        boughtMap[id].push(t);
+      });
       document.getElementById("coins").innerText = userCoins;
     }
     loadItems();
@@ -130,37 +132,46 @@
     const dom = document.getElementById("items");
     dom.innerHTML = "";
     data.items.forEach(it => {
-      const isBought = boughtItems.includes(it.id);
+      let buttonsHtml = "";
+      const labels = ['原版','剪辑','无码'];
+      for (let t = 1; t <= 3; t++) {
+        const field = it[`link_${t}`];
+        if (!field || field.toString().trim() === '') continue;
+        const isBought = boughtMap[it.id] && boughtMap[it.id].includes(t);
+        if (isBought) buttonsHtml += `<button class="btn-bought" onclick="showLink(${it.id},${t})">${labels[t-1]}</button>`;
+        else buttonsHtml += `<button onclick="buy(${it.id},${t})">🔒 ${labels[t-1]}</button>`;
+      }
+
       dom.innerHTML += `
         <div class="card">
           <img src="${it.image}">
           <div class="name">${it.name}</div>
-          <div class="price">${it.price} 金币</div>
-          ${isBought 
-            ? `<button class="btn-bought" onclick="showLink(${it.id})">查看链接</button>`
-            : `<button onclick="buy(${it.id},${it.price})">立即购买</button>`
-          }
+          <div class="price">1 金币</div>
+          ${buttonsHtml}
         </div>
       `;
     });
   }
 
-  async function buy(itemId, price) {
+  async function buy(itemId, type) {
+    const price = 1;
     if (userCoins < price) return alert("金币不足");
-    const r = await fetch("/api/buy", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: user, item_id: itemId })
-    });
+    const r = await fetch("/api/buy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user, item_id: itemId, type }) });
     const d = await r.json();
     alert(d.msg);
-    if (d.ok) location.reload();
+    if (d.ok) {
+      userCoins = d.coins !== undefined ? d.coins : userCoins - price;
+      document.getElementById('coins').innerText = userCoins;
+      loadItems();
+    }
   }
 
-  async function showLink(itemId) {
+  async function showLink(itemId, type) {
     const r = await fetch("/api/items");
     const data = await r.json();
     const item = data.items.find(i => i.id == itemId);
-    document.getElementById("linkText").innerText = item.link;
+    const link = type === 1 ? item.link_1 : type === 2 ? item.link_2 : item.link_3;
+    document.getElementById("linkText").innerText = link || "链接不存在";
     document.getElementById("linkModal").style.display = "flex";
   }
 
@@ -169,28 +180,18 @@
   }
 
   async function signIn() {
-    const r = await fetch("/api/sign", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: user })
-    });
+    const r = await fetch("/api/sign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user }) });
     const d = await r.json();
     alert(d.msg);
-    if (d.ok) location.reload();
+    if (d.ok) {
+      userCoins = d.coins || userCoins;
+      document.getElementById('coins').innerText = userCoins;
+      loadItems();
+    }
   }
 
   // 打赏弹窗
-  function openDonate() {
-    document.getElementById("donateModal").style.display = "flex";
-  }
-  function closeDonate() {
-    document.getElementById("donateModal").style.display = "none";
-  }
-  // 点击遮罩层关闭打赏弹窗
-    document.getElementById('donateModal').addEventListener('click', function(e){
-  if(e.target === this){
-    closeDonate();
-  }
-});
+  function openDonate() { document.getElementById("donateModal").style.display = "flex"; }
+  function closeDonate() { document.getElementById("donateModal").style.display = "none"; }
+  document.getElementById('donateModal').addEventListener('click', function(e) { if (e.target === this) closeDonate(); });
 </script>
-</body>
-</html>

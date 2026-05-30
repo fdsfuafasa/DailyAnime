@@ -45,12 +45,13 @@ export default {
         return Response.json({ ok: true, msg: "密码重置成功！" });
       }
 
-      // 用户信息（金币）
+      // 用户信息（金币 + 已购类型）
       if (url.pathname === "/api/userinfo" && method === "POST") {
         const { username } = await request.json();
         const user = await env.DB.prepare("SELECT username, coins FROM users WHERE username=?").bind(username).first();
-        const items = await env.DB.prepare("SELECT item_id FROM user_items WHERE username=?").bind(username).all();
-        const bought = items.results.map(i => i.item_id);
+        const items = await env.DB.prepare("SELECT item_id, type FROM user_items WHERE username=?").bind(username).all();
+        // 返回已购买数组，包含 item_id 与 type
+        const bought = items.results.map(i => ({ item_id: i.item_id, type: i.type }));
         return Response.json({ ok: true, user, bought });
       }
 
@@ -73,19 +74,22 @@ export default {
         return Response.json({ ok: true, items: items.results });
       }
 
-      // 购买商品
+      // 购买商品（按类型购买，固定价格 1）
       if (url.pathname === "/api/buy" && method === "POST") {
-        const { username, item_id } = await request.json();
+        const { username, item_id, type } = await request.json();
         const user = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
-        const item = await env.DB.prepare("SELECT price FROM items WHERE id=?").bind(item_id).first();
+        const item = await env.DB.prepare("SELECT link_1, link_2, link_3 FROM items WHERE id=?").bind(item_id).first();
         if (!user || !item) return Response.json({ ok: false, msg: "用户或商品不存在" });
-        if (user.coins < item.price) return Response.json({ ok: false, msg: "金币不足" });
-        const exist = await env.DB.prepare("SELECT * FROM user_items WHERE username=? AND item_id=?").bind(username, item_id).first();
-        if (exist) return Response.json({ ok: false, msg: "已购买过该商品" });
-        
-        await env.DB.prepare("INSERT INTO user_items (username, item_id) VALUES (?,?)").bind(username, item_id).run();
-        await env.DB.prepare("UPDATE users SET coins=coins-? WHERE username=?").bind(item.price, username).run();
-        
+        const typeField = `link_${type}`;
+        if (!item[typeField] || item[typeField].toString().trim() === "") return Response.json({ ok: false, msg: "该类型尚未上架" });
+        const price = 1;
+        if (user.coins < price) return Response.json({ ok: false, msg: "金币不足" });
+        const exist = await env.DB.prepare("SELECT * FROM user_items WHERE username=? AND item_id=? AND type=?").bind(username, item_id, type).first();
+        if (exist) return Response.json({ ok: false, msg: "已购买过该商品类型" });
+
+        await env.DB.prepare("INSERT INTO user_items (username, item_id, type) VALUES (?,?,?)").bind(username, item_id, type).run();
+        await env.DB.prepare("UPDATE users SET coins=coins-? WHERE username=?").bind(price, username).run();
+
         const newUser = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
         return Response.json({ ok: true, msg: "购买成功", coins: newUser.coins });
       }
