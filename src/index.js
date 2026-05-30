@@ -14,7 +14,7 @@ export default {
         if (existsUsername) return Response.json({ ok: false, msg: "用户名已存在" });
         const existsEmail = await env.DB.prepare("SELECT email FROM users WHERE email = ?").bind(email).first();
         if (existsEmail) return Response.json({ ok: false, msg: "邮箱已存在" });
-        await env.DB.prepare("INSERT INTO users (username, password, email, coins) VALUES (?,?,?,5)").bind(username, password, email).run();
+        await env.DB.prepare("INSERT INTO users (username, password, email, coins) VALUES (?,?,?,2)").bind(username, password, email).run();
         return Response.json({ ok: true, msg: "注册成功" });
       }
 
@@ -64,9 +64,9 @@ export default {
         const signed = await env.DB.prepare("SELECT * FROM sign_in WHERE username=? AND date=?").bind(username, today).first();
         if (signed) return Response.json({ ok: false, msg: "今天已签到" });
         await env.DB.prepare("INSERT INTO sign_in (username, date) VALUES (?,?)").bind(username, today).run();
-        await env.DB.prepare("UPDATE users SET coins=coins+1 WHERE username=?").bind(username).run();
+        await env.DB.prepare("UPDATE users SET coins=coins+2 WHERE username=?").bind(username).run();
         const u = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
-        return Response.json({ ok: true, msg: "签到成功 +1金币", coins: u.coins });
+        return Response.json({ ok: true, msg: "签到成功 +2金币", coins: u.coins });
       }
 
       // ====================== 商品功能 ======================
