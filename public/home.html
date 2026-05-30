@@ -18,13 +18,15 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{margin:0;padding:0;background:linear-gradient(180deg,#f7fbff,#eef4ff);color:var(--text);font-family:"Segoe UI",system-ui,Arial,sans-serif;min-height:100vh;}
   .container{max-width:500px;margin:0 auto;padding:20px 16px 24px;}
-  .top{background:var(--surface);padding:18px 16px;border-radius:26px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;box-shadow:var(--shadow);}
-  .top .user-name{width:100%;font-size:0.95rem;font-weight:700;word-break:break-word;}
-  .top button{width:auto;border:none;background:#e2e8f0;color:var(--text);padding:8px 12px;border-radius:14px;font-weight:700;font-size:0.88rem;cursor:pointer;min-width:110px;}
+  .top{background:var(--surface);padding:18px 16px;border-radius:26px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;box-shadow:var(--shadow);}
+  .top .user-name{font-size:0.95rem;font-weight:700;word-break:break-word;}
+  .top button{width:auto;border:none;background:#e2e8f0;color:var(--text);padding:8px 12px;border-radius:14px;font-weight:700;font-size:0.88rem;cursor:pointer;}
+  .top button#topActionButton{min-width:110px;}
+  .top .small-btn{padding:6px 10px;font-size:0.82rem;}
   .top-right{position:sticky;top:14px;display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:16px;z-index:10;}
   .coin-box{background:linear-gradient(135deg,#ffd700,#ff9500);color:#fff;padding:10px 14px;border-radius:999px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 12px 28px rgba(255,149,0,.18);}
   .donate-btn{background:linear-gradient(135deg,#ff6699,#ff3366);color:#fff;border:none;padding:10px 16px;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px rgba(255,51,102,.18);}
-  .sign-btn{width:100%;padding:14px 18px;border:none;border-radius:18px;background:linear-gradient(135deg,#ff8f00,#ff6a00);color:#fff;font-weight:800;font-size:1rem;margin-bottom:18px;box-shadow:0 16px 32px rgba(255,136,0,.2);cursor:pointer;}
+  .sign-btn{width:auto;padding:6px 10px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff8f00,#ff6a00);color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;}
   .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
   @media (max-width: 860px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));}}
   @media (max-width: 660px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
@@ -66,11 +68,10 @@
   <!-- 顶部信息 -->
   <div class="top">
     <div class="user-name">用户：<span id="user">-</span></div>
+    <button class="small-btn" onclick="showGuide()">🌍 原版导航</button>
+    <button class="sign-btn" onclick="signIn()">📅 签到</button>
     <button id="topActionButton">退出登录</button>
   </div>
-
-<!-- 签到 -->
-<button class="sign-btn" onclick="signIn()">📅 每日签到 +1 金币</button>
 
 <!-- 商品 -->
 <div class="grid" id="items"></div>
@@ -84,6 +85,19 @@
     <div class="modal-body">
       <h3>商品链接</h3>
       <div id="linkText" class="link"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 原版导航弹窗 -->
+<div class="modal" id="guideModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="close" onclick="closeGuide()">✕</span>
+    </div>
+    <div class="modal-body">
+      <h3>原版导航</h3>
+      <div class="link" id="guideText"></div>
     </div>
   </div>
 </div>
@@ -206,6 +220,16 @@
 
   function closeModal() {
     document.getElementById("linkModal").style.display = "none";
+  }
+
+  function showGuide() {
+    const text = "为避免违规，原版资源网站在网盘自取\n本站提供剪辑版与破解版资源：\nhttps://pan.baidu.com/s/1bKeNHyP1i2ijUqdRP2-huw?pwd=ifvc\n提取码: ifvc";
+    document.getElementById("guideText").innerText = text;
+    document.getElementById("guideModal").style.display = "flex";
+  }
+
+  function closeGuide() {
+    document.getElementById("guideModal").style.display = "none";
   }
 
   async function signIn() {
