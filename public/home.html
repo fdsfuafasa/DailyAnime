@@ -146,7 +146,6 @@
         <div class="card">
           <img src="${it.image}">
           <div class="name">${it.name}</div>
-          <div class="price">1 金币</div>
           ${buttonsHtml}
         </div>
       `;
@@ -156,6 +155,9 @@
   async function buy(itemId, type) {
     const price = 1;
     if (userCoins < price) return alert("金币不足");
+    const labels = ['原版','剪辑','无码'];
+    const choice = labels[type - 1] || '该类型';
+    if (!confirm(`确认花费 1 金币购买 ${choice} 吗？`)) return;
     const r = await fetch("/api/buy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user, item_id: itemId, type }) });
     const d = await r.json();
     alert(d.msg);
