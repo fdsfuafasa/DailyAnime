@@ -27,6 +27,12 @@
   .coin-box{background:linear-gradient(135deg,#ffd700,#ff9500);color:#fff;padding:10px 14px;border-radius:999px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 12px 28px rgba(255,149,0,.18);}
   .donate-btn{background:linear-gradient(135deg,#ff6699,#ff3366);color:#fff;border:none;padding:10px 16px;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px rgba(255,51,102,.18);}
   .sign-btn{width:auto;padding:6px 10px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff8f00,#ff6a00);color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;}
+  .search-box{background:var(--surface);padding:14px 16px;border-radius:18px;margin-bottom:16px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow);}
+  .search-input{flex:1;padding:10px 14px;border:1px solid #e2e8f0;border-radius:14px;font-size:0.95rem;color:var(--text);font-family:inherit;}
+  .search-input::placeholder{color:#94a3b8;}
+  .search-btn{width:auto;padding:10px 14px;border:none;border-radius:14px;background:#3b82f6;color:#fff;font-weight:700;font-size:0.88rem;cursor:pointer;}
+  .search-btn:hover{background:#2563eb;}
+  .clear-btn{width:auto;padding:10px 12px;border:none;border-radius:14px;background:#e2e8f0;color:var(--text);font-weight:700;font-size:0.88rem;cursor:pointer;}
   .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
   @media (max-width: 860px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));}}
   @media (max-width: 660px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
@@ -73,6 +79,13 @@
     <button id="topActionButton">退出登录</button>
   </div>
 
+<!-- 搜索框 -->
+<div class="search-box">
+  <input type="text" id="searchInput" class="search-input" placeholder="搜索商品名...">
+  <button class="search-btn" onclick="doSearch()">🔍 搜索</button>
+  <button class="clear-btn" onclick="clearSearch()">✕</button>
+</div>
+
 <!-- 商品 -->
 <div class="grid" id="items"></div>
 
@@ -118,6 +131,8 @@
   const user = localStorage.getItem("loginUser");
   let userCoins = 0;
   const boughtMap = {};
+  let allItems = [];
+  let currentSearchQuery = "";
 
   window.onload = initPage;
 
@@ -160,9 +175,14 @@
   async function loadItems() {
     const r = await fetch("/api/items");
     const data = await r.json();
+    allItems = data.items;
+    renderItems(allItems);
+  }
+
+  function renderItems(items) {
     const dom = document.getElementById("items");
     dom.innerHTML = "";
-    data.items.forEach(it => {
+    items.forEach(it => {
       let buttonsHtml = "";
       const labels = ['原版','剪辑','破解'];
       for (let t = 1; t <= 3; t++) {
@@ -231,6 +251,37 @@
   function closeGuide() {
     document.getElementById("guideModal").style.display = "none";
   }
+
+  function doSearch() {
+    const query = document.getElementById("searchInput").value.trim().toLowerCase();
+    if (!query) {
+      alert("请输入搜索关键词");
+      return;
+    }
+    currentSearchQuery = query;
+    const filtered = allItems.filter(item => item.name.toLowerCase().includes(query));
+    if (filtered.length === 0) {
+      alert("未找到匹配的商品");
+      document.getElementById("items").innerHTML = "";
+      return;
+    }
+    renderItems(filtered);
+  }
+
+  function clearSearch() {
+    document.getElementById("searchInput").value = "";
+    currentSearchQuery = "";
+    renderItems(allItems);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') doSearch();
+      });
+    }
+  });
 
   async function signIn() {
     const r = await fetch("/api/sign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: user }) });
