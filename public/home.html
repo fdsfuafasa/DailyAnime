@@ -395,7 +395,7 @@
     items.forEach(it => {
       console.log('item image', it.id, it.image);
       let buttonsHtml = "";
-      const labels = ['原版','剪辑','破解'];
+      const labels = ['原版','剪辑版','破解'];
       for (let t = 1; t <= 3; t++) {
         const field = it[`link_${t}`];
         if (!field || field.toString().trim() === '') continue;
