@@ -359,7 +359,9 @@
   function renderItems(items) {
     const dom = document.getElementById("items");
     dom.innerHTML = "";
+    console.log('renderItems', items ? items.length : 0);
     items.forEach(it => {
+      console.log('item image', it.id, it.image);
       let buttonsHtml = "";
       const labels = ['原版','剪辑','破解'];
       for (let t = 1; t <= 3; t++) {
@@ -378,7 +380,7 @@
       const sizeLabel = `大小：${it.size || '-'}`;
       dom.innerHTML += `
         <div class="card">
-          <img src="${it.image}">
+          <img src="${it.image}" onerror="this.onerror=null;this.src='/image/placeholder.png';console.error('image load error','${it.image}');">
           <div class="name">${it.name}</div>
           <div class="item-meta"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
           ${buttonsHtml}
