@@ -84,7 +84,11 @@
   .donate-desc{color:#64748b;margin-bottom:22px;font-size:0.95rem;}
   .donate-img{width:100%;max-width:260px;height:auto;border-radius:20px;box-shadow:0 14px 32px rgba(15,23,42,.12);}
   .donate-tip{margin-top:16px;color:#94a3b8;font-size:0.92rem;line-height:1.5;}
-  @media (max-width: 420px){.container{padding:18px 12px 22px;}.top,.donate-card,.modal-box{border-radius:20px;}.sign-btn{padding:13px 16px;font-size:0.98rem;}.donate-img{width:100%;}.top button{flex:1 1 100%;}.top .user-name{flex:1 1 100%;}.search-box{padding:12px;}.search-btn,.clear-btn{width:100%;}.task-action{flex-direction:column;align-items:stretch;}.tasks-panel{max-width:100%;padding:18px 14px;}.modal-body{padding:0 16px 20px;}.link{font-size:0.92rem;}.top-right{justify-content:space-between;}.task-box{width:100%;justify-content:center;}} 
+  .category-tabs{background:var(--surface);padding:14px 16px;border-radius:18px;margin-bottom:16px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow);flex-wrap:wrap;}
+  .category-btn{padding:10px 18px;border:2px solid #e2e8f0;background:#fff;color:var(--text);border-radius:14px;font-weight:700;font-size:0.92rem;cursor:pointer;transition:all .3s ease;}
+  .category-btn:hover{border-color:#3b82f6;color:#3b82f6;}
+  .category-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6;box-shadow:0 10px 22px rgba(59,130,246,.22);}
+  @media (max-width: 420px){.container{padding:18px 12px 22px;}.top,.donate-card,.modal-box{border-radius:20px;}.sign-btn{padding:13px 16px;font-size:0.98rem;}.donate-img{width:100%;}.top button{flex:1 1 100%;}.top .user-name{flex:1 1 100%;}.search-box{padding:12px;}.search-btn,.clear-btn{width:100%;}.task-action{flex-direction:column;align-items:stretch;}.tasks-panel{max-width:100%;padding:18px 14px;}.modal-body{padding:0 16px 20px;}.link{font-size:0.92rem;}.top-right{justify-content:space-between;}.task-box{width:100%;justify-content:center;}.category-tabs{padding:12px;gap:8px;}} 
   @media (max-width: 320px){.top{padding:14px 12px;}.search-input{font-size:0.92rem;}.buy-btn,.btn-bought{padding:12px 0;}.card{min-height:auto;}.top .small-btn{padding:8px 10px;}}
 </style>
 </head>
@@ -122,6 +126,12 @@
   <input type="text" id="searchInput" class="search-input" placeholder="搜索商品名...">
   <button class="search-btn" onclick="doSearch()">🔍</button>
   <button class="clear-btn" onclick="clearSearch()">✕</button>
+</div>
+
+<!-- 分类标签 -->
+<div class="category-tabs">
+  <button class="category-btn active" onclick="switchCategory('video')">📺 里番</button>
+  <button class="category-btn" onclick="switchCategory('comic')">📚 本子</button>
 </div>
 
 <!-- 任务中心（侧滑面板） -->
@@ -172,7 +182,7 @@
     </div>
     <div class="modal-body">
       <h3>公告</h3>
-      <div class="link">本网站为个人兴趣所搭建，用于分享个人整理资源，需要自行寻找原版资源的可前往导航寻找，但是需要魔法，各位有什么想要的资源或者想法可以在留言板块留言。网站处于初步阶段，资源会持续更新！</div>
+      <div class="link">本网站为个人兴趣所搭建，用于分享个人整理资源，各位有什么想要的资源或者想法可以在留言板块留言。网站处于初步阶段，资源会持续更新！剪辑版指的是把平时需要跳过的部分都删除了，只剩打桩部分，并且把整个系列整合到一个视频，直接全程起飞</div>
     </div>
   </div>
 </div>
@@ -209,6 +219,7 @@
   let allItems = [];
   let allTasks = [];
   let currentSearchQuery = "";
+  let currentCategory = 'video';
 
   window.onload = initPage;
 
@@ -353,7 +364,27 @@
     const r = await fetch("/api/items");
     const data = await r.json();
     allItems = data.items;
-    renderItems(allItems);
+    filterAndRenderItems();
+  }
+
+  function filterAndRenderItems() {
+    let filtered = allItems.filter(item => item.type === currentCategory);
+    if (currentSearchQuery) {
+      filtered = filtered.filter(item => item.name.toLowerCase().includes(currentSearchQuery.toLowerCase()));
+    }
+    renderItems(filtered);
+  }
+
+  function switchCategory(category) {
+    if (currentCategory === category) return;
+    currentCategory = category;
+    currentSearchQuery = "";
+    document.getElementById("searchInput").value = "";
+    document.querySelectorAll(".category-btn").forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    filterAndRenderItems();
   }
 
   function renderItems(items) {
@@ -481,7 +512,7 @@
       return;
     }
     currentSearchQuery = query;
-    const filtered = allItems.filter(item => item.name.toLowerCase().includes(query));
+    let filtered = allItems.filter(item => item.type === currentCategory && item.name.toLowerCase().includes(query));
     if (filtered.length === 0) {
       alert("未找到匹配的商品");
       document.getElementById("items").innerHTML = "";
@@ -493,7 +524,7 @@
   function clearSearch() {
     document.getElementById("searchInput").value = "";
     currentSearchQuery = "";
-    renderItems(allItems);
+    filterAndRenderItems();
   }
 
   document.addEventListener('DOMContentLoaded', function() {
