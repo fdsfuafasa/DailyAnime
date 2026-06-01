@@ -267,7 +267,10 @@
           <div class="task-desc">${task.description}</div>
           <div class="task-action">
             <div class="task-reward">+${task.reward_coins} 金币</div>
-            <button class="task-btn" onclick="completeTask(${task.id})" ${!user ? 'disabled' : ''}>${user ? '领取任务' : '登录后领取'}</button>
+            <div style="display:flex;gap:8px;align-items:center;width:100%;">
+              <input id="task_code_${task.id}" maxlength="6" placeholder="输入6位验证码" style="flex:1;padding:8px;border:1px solid #e2e8f0;border-radius:12px;font-size:0.9rem;">
+              <button class="task-btn" onclick="completeTask(${task.id})" ${!user ? 'disabled' : ''}>${user ? '提交' : '登录后提交'}</button>
+            </div>
           </div>
         </div>
       `;
@@ -279,13 +282,16 @@
       if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/register.html';
       return;
     }
+    const codeInput = document.getElementById(`task_code_${taskId}`);
+    const code = codeInput ? codeInput.value.trim() : "";
+    if (!code || code.length !== 6) return alert('请输入6位验证码');
     const r = await fetch("/api/task/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: user, task_id: taskId })
+      body: JSON.stringify({ username: user, task_id: taskId, code })
     });
     const d = await r.json();
-    alert(d.msg || "任务领取失败");
+    alert(d.msg || "任务提交失败");
     if (d.ok) {
       userCoins = d.coins !== undefined ? d.coins : userCoins;
       document.getElementById('coins').innerText = userCoins;

@@ -4,7 +4,9 @@ async function ensureTaskTables(env) {
     title TEXT,
     description TEXT,
     reward_coins INTEGER,
-    active INTEGER DEFAULT 1
+    active INTEGER DEFAULT 1,
+    task_type TEXT DEFAULT 'once', -- 'daily' or 'once'
+    code TEXT -- 6-digit code required to submit completion
   )`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,20 +17,26 @@ async function ensureTaskTables(env) {
 
   const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM tasks").first();
   if (count && count.count === 0) {
-    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins) VALUES (?,?,?)").bind(
+    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins, task_type, code) VALUES (?,?,?,?,?)").bind(
       "首次登录奖励",
       "登录后领取，可获得金币奖励。",
-      5
+      5,
+      "once",
+      "100001"
     ).run();
-    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins) VALUES (?,?,?)").bind(
+    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins, task_type, code) VALUES (?,?,?,?,?)").bind(
       "发送一条留言",
       "在留言板发送一条留言，获得额外金币奖励。",
-      3
+      3,
+      "daily",
+      "200002"
     ).run();
-    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins) VALUES (?,?,?)").bind(
+    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins, task_type, code) VALUES (?,?,?,?,?)").bind(
       "首次购买",
       "购买任意商品后可领取奖励金币。",
-      4
+      4,
+      "once",
+      "300003"
     ).run();
   }
 }
@@ -116,26 +124,56 @@ export default {
       if (url.pathname === "/api/tasks" && method === "GET") {
         await ensureTaskTables(env);
         const username = url.searchParams.get("username");
-        const tasksResult = await env.DB.prepare("SELECT id, title, description, reward_coins FROM tasks WHERE active=1").all();
+        const tasksResult = await env.DB.prepare("SELECT id, title, description, reward_coins, task_type, code FROM tasks WHERE active=1").all();
         let tasks = tasksResult.results || [];
         if (username) {
-          const completed = await env.DB.prepare("SELECT task_id FROM user_tasks WHERE username=?").bind(username).all();
-          const completedIds = (completed.results || []).map(r => r.task_id);
-          tasks = tasks.filter(task => !completedIds.includes(task.id));
+          const completedRows = await env.DB.prepare("SELECT task_id, completed_at FROM user_tasks WHERE username=?").bind(username).all();
+          const completed = (completedRows.results || []);
+          const today = new Date().toISOString().split('T')[0];
+          tasks = tasks.filter(task => {
+            // find any completion records for this task
+            const records = completed.filter(r => r.task_id == task.id);
+            if (!records || records.length === 0) return true;
+            if ((task.task_type || 'once') === 'daily') {
+              // if any record has today's date, consider completed for today
+              const doneToday = records.some(r => {
+                try { return r.completed_at.split('T')[0] === today; } catch (e) { return false; }
+              });
+              return !doneToday;
+            } else {
+              // once-type tasks: if any record exists, it's done
+              return false;
+            }
+          });
         }
         return Response.json({ ok: true, tasks });
       }
 
       if (url.pathname === "/api/task/complete" && method === "POST") {
         await ensureTaskTables(env);
-        const { username, task_id } = await request.json();
-        if (!username || !task_id) return Response.json({ ok: false, msg: "参数错误" });
+        const { username, task_id, code } = await request.json();
+        if (!username || !task_id || !code) return Response.json({ ok: false, msg: "参数错误，需提供 username, task_id, code" });
         const user = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
-        const task = await env.DB.prepare("SELECT id, reward_coins FROM tasks WHERE id=? AND active=1").bind(task_id).first();
+        const task = await env.DB.prepare("SELECT id, reward_coins, task_type, code FROM tasks WHERE id=? AND active=1").bind(task_id).first();
         if (!user || !task) return Response.json({ ok: false, msg: "用户或任务不存在" });
-        const completed = await env.DB.prepare("SELECT * FROM user_tasks WHERE username=? AND task_id=?").bind(username, task_id).first();
-        if (completed) return Response.json({ ok: false, msg: "该任务已完成" });
-        await env.DB.prepare("INSERT INTO user_tasks (username, task_id, completed_at) VALUES (?,?,?)").bind(username, task_id, new Date().toISOString()).run();
+        // verify code
+        if (!task.code || task.code.toString().trim() !== code.toString().trim()) return Response.json({ ok: false, msg: "验证码错误" });
+
+        const today = new Date().toISOString().split('T')[0];
+        if ((task.task_type || 'once') === 'daily') {
+          const doneToday = await env.DB.prepare("SELECT * FROM user_tasks WHERE username=? AND task_id=?").bind(username, task_id).all();
+          const records = (doneToday.results || []);
+          const already = records.some(r => {
+            try { return r.completed_at.split('T')[0] === today; } catch (e) { return false; }
+          });
+          if (already) return Response.json({ ok: false, msg: "今日任务已完成" });
+          await env.DB.prepare("INSERT INTO user_tasks (username, task_id, completed_at) VALUES (?,?,?)").bind(username, task_id, new Date().toISOString()).run();
+        } else {
+          const completed = await env.DB.prepare("SELECT * FROM user_tasks WHERE username=? AND task_id=?").bind(username, task_id).first();
+          if (completed) return Response.json({ ok: false, msg: "该任务已完成" });
+          await env.DB.prepare("INSERT INTO user_tasks (username, task_id, completed_at) VALUES (?,?,?)").bind(username, task_id, new Date().toISOString()).run();
+        }
+
         await env.DB.prepare("UPDATE users SET coins=coins+? WHERE username=?").bind(task.reward_coins, username).run();
         const u = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
         return Response.json({ ok: true, msg: `任务完成 +${task.reward_coins}金币`, coins: u.coins });
