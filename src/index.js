@@ -1,3 +1,38 @@
+async function ensureTaskTables(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    description TEXT,
+    reward_coins INTEGER,
+    active INTEGER DEFAULT 1
+  )`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT,
+    task_id INTEGER,
+    completed_at TEXT
+  )`).run();
+
+  const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM tasks").first();
+  if (count && count.count === 0) {
+    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins) VALUES (?,?,?)").bind(
+      "首次登录奖励",
+      "登录后领取，可获得金币奖励。",
+      5
+    ).run();
+    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins) VALUES (?,?,?)").bind(
+      "发送一条留言",
+      "在留言板发送一条留言，获得额外金币奖励。",
+      3
+    ).run();
+    await env.DB.prepare("INSERT INTO tasks (title, description, reward_coins) VALUES (?,?,?)").bind(
+      "首次购买",
+      "购买任意商品后可领取奖励金币。",
+      4
+    ).run();
+  }
+}
+
 export default {
   async fetch(request, env) {
     try {
@@ -75,6 +110,35 @@ export default {
         await env.DB.prepare("UPDATE users SET coins=coins+2 WHERE username=?").bind(username).run();
         const u = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
         return Response.json({ ok: true, msg: "签到成功 +2金币", coins: u.coins });
+      }
+
+      // 任务功能
+      if (url.pathname === "/api/tasks" && method === "GET") {
+        await ensureTaskTables(env);
+        const username = url.searchParams.get("username");
+        const tasksResult = await env.DB.prepare("SELECT id, title, description, reward_coins FROM tasks WHERE active=1").all();
+        let tasks = tasksResult.results || [];
+        if (username) {
+          const completed = await env.DB.prepare("SELECT task_id FROM user_tasks WHERE username=?").bind(username).all();
+          const completedIds = (completed.results || []).map(r => r.task_id);
+          tasks = tasks.filter(task => !completedIds.includes(task.id));
+        }
+        return Response.json({ ok: true, tasks });
+      }
+
+      if (url.pathname === "/api/task/complete" && method === "POST") {
+        await ensureTaskTables(env);
+        const { username, task_id } = await request.json();
+        if (!username || !task_id) return Response.json({ ok: false, msg: "参数错误" });
+        const user = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
+        const task = await env.DB.prepare("SELECT id, reward_coins FROM tasks WHERE id=? AND active=1").bind(task_id).first();
+        if (!user || !task) return Response.json({ ok: false, msg: "用户或任务不存在" });
+        const completed = await env.DB.prepare("SELECT * FROM user_tasks WHERE username=? AND task_id=?").bind(username, task_id).first();
+        if (completed) return Response.json({ ok: false, msg: "该任务已完成" });
+        await env.DB.prepare("INSERT INTO user_tasks (username, task_id, completed_at) VALUES (?,?,?)").bind(username, task_id, new Date().toISOString()).run();
+        await env.DB.prepare("UPDATE users SET coins=coins+? WHERE username=?").bind(task.reward_coins, username).run();
+        const u = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
+        return Response.json({ ok: true, msg: `任务完成 +${task.reward_coins}金币`, coins: u.coins });
       }
 
       // ====================== 商品功能 ======================
