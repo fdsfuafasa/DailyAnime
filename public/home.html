@@ -380,7 +380,7 @@
       return;
     }
     const price = 1;
-    if (userCoins < price) return alert("金币不足");
+    if (userCoins < price) return alert("金币不足，请完成任务获取金币。");
     const labels = ['原版','剪辑','破解'];
     const choice = labels[type - 1] || '该类型';
     if (!confirm(`确认花费 1 金币购买 ${choice} 吗？`)) return;
