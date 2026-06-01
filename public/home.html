@@ -60,6 +60,8 @@
   .card{background:var(--surface);border-radius:24px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-shadow:var(--shadow);min-height:240px;}
   .card img{width:100%;aspect-ratio:1 / 1;border-radius:16px;object-fit:cover;}
   .name{font-weight:800;margin:12px 0 6px;font-size:0.92rem;line-height:1.4;min-height:2.5em;}
+  .item-meta{color:#64748b;font-size:0.84rem;line-height:1.4;margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .item-meta span{background:rgba(59,130,246,.08);padding:6px 10px;border-radius:999px;}
   .price{color:#fb923c;margin:0 0 10px;font-size:0.88rem;}
   button{width:100%;padding:14px 0;border:none;border-radius:16px;font-weight:800;color:#fff;font-size:0.97rem;cursor:pointer;transition:transform .2s ease,filter .2s ease;}
   button:hover{transform:translateY(-1px);}
@@ -368,10 +370,17 @@
         else buttonsHtml += `<button class="buy-btn" onclick="buy(${it.id},${t})">🔒 ${labels[t-1]}</button>`;
       }
 
+      const lengthLabel = it.type === 'video'
+        ? `时长：${it.length || '-'}`
+        : it.type === 'comic'
+          ? `图片：${it.length || '-'} 张`
+          : `长度：${it.length || '-'}`;
+      const sizeLabel = `大小：${it.size || '-'}`;
       dom.innerHTML += `
         <div class="card">
           <img src="${it.image}">
           <div class="name">${it.name}</div>
+          <div class="item-meta"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
           ${buttonsHtml}
         </div>
       `;
