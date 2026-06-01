@@ -41,6 +41,20 @@ async function ensureTaskTables(env) {
   }
 }
 
+async function ensureItemsTable(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS items (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    image TEXT,
+    link_1 TEXT,
+    link_2 TEXT,
+    link_3 TEXT,
+    type TEXT,
+    length TEXT,
+    size TEXT
+  )`).run();
+}
+
 export default {
   async fetch(request, env) {
     try {
@@ -187,8 +201,25 @@ export default {
       // ====================== 商品功能 ======================
       // 获取所有商品
       if (url.pathname === "/api/items" && method === "GET") {
+        await ensureItemsTable(env);
         const items = await env.DB.prepare("SELECT * FROM items").all();
         return Response.json({ ok: true, items: items.results });
+      }
+
+      // 管理：批量导入或替换 items（按 id upsert）
+      if (url.pathname === "/api/admin/import_items" && method === "POST") {
+        const adminKey = request.headers.get('x-admin-key') || url.searchParams.get('admin_key');
+        if (env.ADMIN_KEY && adminKey !== env.ADMIN_KEY) return Response.json({ ok: false, msg: 'unauthorized' }, { status: 401 });
+        const payload = await request.json();
+        const items = Array.isArray(payload) ? payload : (payload.items || []);
+        if (!items || !Array.isArray(items)) return Response.json({ ok: false, msg: 'invalid payload' });
+        await ensureItemsTable(env);
+        for (const it of items) {
+          await env.DB.prepare("INSERT OR REPLACE INTO items (id,name,image,link_1,link_2,link_3,type,length,size) VALUES (?,?,?,?,?,?,?,?,?)")
+            .bind(it.id, it.name || '', it.image || '', it.link_1 || '', it.link_2 || '', it.link_3 || '', it.type || '', it.length || '', it.size || '')
+            .run();
+        }
+        return Response.json({ ok: true, msg: `imported ${items.length} items` });
       }
 
       // 购买商品（按类型购买，固定价格 1）
