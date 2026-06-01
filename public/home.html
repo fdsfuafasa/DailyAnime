@@ -44,12 +44,14 @@
   .task-btn{flex:1;padding:10px 12px;border:none;border-radius:14px;background:#3b82f6;color:#fff;font-weight:700;font-size:0.9rem;cursor:pointer;}
   .task-btn:disabled{background:#cbd5e1;cursor:not-allowed;}
   .no-tasks{color:#64748b;font-size:0.95rem;text-align:center;padding:16px 0;}
-  .tasks-panel{position:fixed;top:0;right:0;height:100%;width:100%;max-width:420px;background:var(--surface);box-shadow: -20px 0 40px rgba(15,23,42,.08);transform:translateX(110%);transition:transform .32s ease;z-index:99999;padding:18px 16px;border-radius:0 0 0 0;display:flex;flex-direction:column;}
+  .task-box{background:linear-gradient(135deg,#60a5fa,#3b82f6);color:#fff;padding:8px 12px;border-radius:999px;font-weight:700;display:flex;align-items:center;gap:8px;border:none;cursor:pointer;font-size:0.95rem}
+  .task-box .task-label{display:inline-block}
+  .task-box.active{box-shadow:0 10px 28px rgba(59,130,246,.18)}
   .tasks-panel{position:fixed;top:0;right:0;height:100%;width:100%;max-width:420px;background:var(--surface);box-shadow: -20px 0 40px rgba(15,23,42,.08);transform:translateX(110%);transition:transform .32s ease;z-index:99999;padding:22px 18px;border-radius:0 0 0 0;display:flex;flex-direction:column;}
   .tasks-panel.open{transform:translateX(0);} 
-  .tasks-panel .panel-header{position:relative;padding-bottom:6px}
-  .tasks-panel .panel-header h3{margin:0;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tasks-panel .panel-close{position:absolute;right:8px;top:8px;background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;padding:6px}
+  .tasks-panel .panel-header{position:relative;padding-bottom:6px;padding-top:12px}
+  .tasks-panel .panel-header h3{margin:0;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:44px}
+  .tasks-panel .panel-close{position:absolute;right:12px;top:12px;background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;padding:6px}
   .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
   @media (max-width: 860px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));}}
   @media (max-width: 660px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
@@ -87,7 +89,7 @@
 <div class="container">
   <!-- 右上角：金币 + 打赏 -->
   <div class="top-right">
-    <button class="small-btn" id="tasksToggleBtn" onclick="openTasks()">🎯</button>
+    <button id="tasksToggleBtn" class="task-box" onclick="openTasks()">🎯 <span class="task-label">任务</span></button>
     <div class="coin-box">
       🪙 <span id="coins">0</span>
     </div>
@@ -100,7 +102,7 @@
   <div class="top">
     <div class="user-name">用户：<span id="user">-</span></div>
     <button class="small-btn" onclick="showGuide()">🌍 原版导航</button>
-    <button class="small-btn" onclick="openTasks()">🎯 任务</button>
+    <!-- 任务入口已移至右上角 -->
     <button class="small-btn" onclick="showAnnouncement()">📢 公告</button>
     <button class="small-btn" onclick="openMessage()">✉️ 留言</button>
     <button class="sign-btn" onclick="signIn()">📅 签到</button>
@@ -453,16 +455,30 @@
   function closeDonate() { document.getElementById("donateModal").style.display = "none"; }
   document.getElementById('donateModal').addEventListener('click', function(e) { if (e.target === this) closeDonate(); });
 
-  // 任务面板控制（侧滑）
+  // 任务面板控制（侧滑） - 切换逻辑，禁用滚动，Esc 关闭
   function openTasks() {
-    loadTasks();
     const panel = document.getElementById("tasksPanel");
+    const toggleBtn = document.getElementById("tasksToggleBtn");
+    const isOpen = panel.classList.contains('open');
+    if (isOpen) return closeTasks();
+    loadTasks();
     panel.classList.add('open');
     panel.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    if (toggleBtn) toggleBtn.classList.add('active');
   }
   function closeTasks() {
     const panel = document.getElementById("tasksPanel");
+    const toggleBtn = document.getElementById("tasksToggleBtn");
     panel.classList.remove('open');
     panel.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (toggleBtn) toggleBtn.classList.remove('active');
   }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const panel = document.getElementById("tasksPanel");
+      if (panel && panel.classList.contains('open')) closeTasks();
+    }
+  });
 </script>
