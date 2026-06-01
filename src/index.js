@@ -57,7 +57,7 @@ export default {
         if (existsUsername) return Response.json({ ok: false, msg: "用户名已存在" });
         const existsEmail = await env.DB.prepare("SELECT email FROM users WHERE email = ?").bind(email).first();
         if (existsEmail) return Response.json({ ok: false, msg: "邮箱已存在" });
-        await env.DB.prepare("INSERT INTO users (username, password, email, coins) VALUES (?,?,?,2)").bind(username, password, email).run();
+        await env.DB.prepare("INSERT INTO users (username, password, email, coins) VALUES (?,?,?,0)").bind(username, password, email).run();
         return Response.json({ ok: true, msg: "注册成功" });
       }
 
@@ -117,7 +117,7 @@ export default {
         await env.DB.prepare("INSERT INTO sign_in (username, date) VALUES (?,?)").bind(username, today).run();
         await env.DB.prepare("UPDATE users SET coins=coins+2 WHERE username=?").bind(username).run();
         const u = await env.DB.prepare("SELECT coins FROM users WHERE username=?").bind(username).first();
-        return Response.json({ ok: true, msg: "签到成功 +2金币", coins: u.coins });
+        return Response.json({ ok: true, msg: "签到成功 +1金币", coins: u.coins });
       }
 
       // 任务功能
@@ -130,20 +130,25 @@ export default {
           const completedRows = await env.DB.prepare("SELECT task_id, completed_at FROM user_tasks WHERE username=?").bind(username).all();
           const completed = (completedRows.results || []);
           const today = new Date().toISOString().split('T')[0];
-          tasks = tasks.filter(task => {
+          tasks = tasks.map(task => {
             // find any completion records for this task
             const records = completed.filter(r => r.task_id == task.id);
-            if (!records || records.length === 0) return true;
-            if ((task.task_type || 'once') === 'daily') {
-              // if any record has today's date, consider completed for today
-              const doneToday = records.some(r => {
+            let completedToday = false;
+            let completedEver = false;
+            
+            if (records && records.length > 0) {
+              completedEver = true;
+              completedToday = records.some(r => {
                 try { return r.completed_at.split('T')[0] === today; } catch (e) { return false; }
               });
-              return !doneToday;
-            } else {
-              // once-type tasks: if any record exists, it's done
-              return false;
             }
+            
+            return {
+              ...task,
+              completed_today: completedToday,
+              completed_ever: completedEver,
+              is_available: (task.task_type || 'once') === 'daily' ? !completedToday : !completedEver
+            };
           });
         }
         return Response.json({ ok: true, tasks });

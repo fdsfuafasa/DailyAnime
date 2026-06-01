@@ -201,6 +201,7 @@
   let userEmail = "";
   const boughtMap = {};
   let allItems = [];
+  let allTasks = [];
   let currentSearchQuery = "";
 
   window.onload = initPage;
@@ -261,15 +262,39 @@
     }
     dom.innerHTML = "";
     tasks.forEach(task => {
+      const isDaily = (task.task_type || 'once') === 'daily';
+      const isAvailable = task.is_available !== false; // default true for backward compat
+      const completedToday = task.completed_today || false;
+      const completedEver = task.completed_ever || false;
+      
+      let statusText = '提交';
+      let statusStyle = '';
+      let inputDisabled = '';
+      let buttonDisabled = '';
+      
+      if (!isAvailable) {
+        if (isDaily && completedToday) {
+          statusText = '今日已完成，任务0点刷新';
+          statusStyle = 'color:#10b981;font-weight:700;';
+          inputDisabled = 'disabled';
+          buttonDisabled = 'disabled';
+        } else if (!isDaily && completedEver) {
+          statusText = '任务已完成';
+          statusStyle = 'color:#10b981;font-weight:700;';
+          inputDisabled = 'disabled';
+          buttonDisabled = 'disabled';
+        }
+      }
+      
       dom.innerHTML += `
-        <div class="task-card">
+        <div class="task-card" ${!isAvailable ? 'style="opacity:0.7;"' : ''}>
           <h4>${task.title}</h4>
           <div class="task-desc">${task.description}</div>
           <div class="task-action">
             <div class="task-reward">+${task.reward_coins} 金币</div>
-            <div style="display:flex;gap:8px;align-items:center;width:100%;">
-              <input id="task_code_${task.id}" maxlength="6" placeholder="输入6位验证码" style="flex:1;padding:8px;border:1px solid #e2e8f0;border-radius:12px;font-size:0.9rem;">
-              <button class="task-btn" onclick="completeTask(${task.id})" ${!user ? 'disabled' : ''}>${user ? '提交' : '登录后提交'}</button>
+            <div style="display:flex;gap:8px;align-items:center;width:100%;${!isAvailable ? 'opacity:0.6;' : ''}">
+              <input id="task_code_${task.id}" maxlength="6" placeholder="输入6位验证码" style="flex:1;padding:8px;border:1px solid #e2e8f0;border-radius:12px;font-size:0.9rem;" ${inputDisabled}>
+              <button class="task-btn" onclick="completeTask(${task.id})" ${buttonDisabled} style="${statusStyle}">${!user ? '登录后提交' : statusText}</button>
             </div>
           </div>
         </div>
@@ -282,6 +307,25 @@
       if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/register.html';
       return;
     }
+    
+    // Find the task to check its status
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) {
+      alert('任务不存在');
+      return;
+    }
+    
+    // Check if task is available
+    if (task.is_available === false) {
+      const isDaily = (task.task_type || 'once') === 'daily';
+      if (isDaily && task.completed_today) {
+        alert('今日任务已完成，任务0点刷新');
+      } else {
+        alert('任务已完成');
+      }
+      return;
+    }
+    
     const codeInput = document.getElementById(`task_code_${taskId}`);
     const code = codeInput ? codeInput.value.trim() : "";
     if (!code || code.length !== 6) return alert('请输入6位验证码');
