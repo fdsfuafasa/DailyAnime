@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>任务完成</title>
   <style>
+    html{min-height:100%;}
     body {
       margin: 0;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px;
       background: linear-gradient(180deg, #eef4ff, #dbeafe);
       font-family: "Segoe UI", system-ui, Arial, sans-serif;
       color: #0f172a;
@@ -50,11 +52,19 @@
       box-shadow: 0 16px 36px rgba(59, 130, 246, 0.2);
       user-select: all;
       word-break: break-all;
+      cursor: text;
     }
     .hint {
       margin-top: 22px;
       color: #475569;
       font-size: 0.95rem;
+    }
+    @media (max-width: 420px) {
+      .card {padding: 24px;}
+      .title {font-size: 1.1rem;}
+      .subtitle {font-size: 0.94rem;}
+      .code-box {font-size: 2.4rem; padding: 20px;}
+      .hint {font-size: 0.9rem;}
     }
   </style>
 </head>
