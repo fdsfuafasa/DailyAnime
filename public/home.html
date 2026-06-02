@@ -115,6 +115,7 @@
     -->
     <!-- 任务入口已移至右上角 -->
     <button class="small-btn" onclick="showAnnouncement()">📢 公告</button>
+    <button class="small-btn" onclick="showExtractGuide()">📦 解压方法</button>
     <button class="small-btn" onclick="openMessage()">✉️ 留言</button>
     <!--
     <button class="sign-btn" onclick="signIn()">📅 签到</button>
@@ -184,6 +185,19 @@
     <div class="modal-body">
       <h3>公告</h3>
       <div class="link">本网站为个人兴趣所搭建，用于分享个人整理资源，各位有什么想要的资源或者想法可以在留言板块留言。网站处于初步阶段，资源会持续更新！剪辑版指的是把平时需要跳过的部分都删除了，只剩打桩部分，并且把整个系列整合到一个视频，直接全程起飞</div>
+    </div>
+  </div>
+</div>
+
+<!-- 解压方法弹窗 -->
+<div class="modal" id="extractGuideModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="close" onclick="closeExtractGuide()">✕</span>
+    </div>
+    <div class="modal-body">
+      <h3>解压方法</h3>
+      <div class="link">压缩包密码统一为：<strong>上老王论坛当老王</strong><br><br>将拓展名末尾的"删"字删除即可得到正常压缩包。<br></div>
     </div>
   </div>
 </div>
@@ -476,6 +490,14 @@
 
   function closeAnnouncement() {
     document.getElementById("announceModal").style.display = "none";
+  }
+
+  function showExtractGuide() {
+    document.getElementById("extractGuideModal").style.display = "flex";
+  }
+
+  function closeExtractGuide() {
+    document.getElementById("extractGuideModal").style.display = "none";
   }
 
   function openMessage() {
