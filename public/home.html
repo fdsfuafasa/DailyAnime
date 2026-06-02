@@ -147,7 +147,7 @@
   <button class="category-btn active" onclick="switchCategory(event, 'video')">📺 里番</button>
   <button class="category-btn" onclick="switchCategory(event, 'comic')">📚 本子</button>
   <div id="videoFilterWrapper" class="video-filter">
-    <button id="videoFilterToggle" class="filter-toggle" onclick="toggleVideoFilterMenu()">类型 <span class="filter-caret">▾</span></button>
+    <button id="videoFilterToggle" class="filter-toggle" onclick="toggleVideoFilterMenu()">全部 <span class="filter-caret">▾</span></button>
     <div id="videoFilterMenu" class="filter-menu" aria-hidden="true">
       <button class="filter-option active" onclick="selectVideoFilter('all')">全部</button>
       <button class="filter-option" onclick="selectVideoFilter('original')">原版</button>
@@ -648,8 +648,9 @@
 
   function updateVideoFilterUI() {
     const wrapper = document.getElementById('videoFilterWrapper');
+    const toggle = document.getElementById('videoFilterToggle');
     const menu = document.getElementById('videoFilterMenu');
-    if (!wrapper || !menu) return;
+    if (!wrapper || !menu || !toggle) return;
     if (currentCategory === 'video') {
       wrapper.style.display = 'flex';
       menu.setAttribute('aria-hidden', videoFilterMenuOpen ? 'false' : 'true');
@@ -658,8 +659,10 @@
       wrapper.style.display = 'none';
       closeVideoFilterMenu();
     }
+    const label = getFilterLabel(currentVideoFilter);
+    toggle.innerHTML = `${label} <span class="filter-caret">▾</span>`;
     document.querySelectorAll('.filter-option').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent.trim() === getFilterLabel(currentVideoFilter));
+      btn.classList.toggle('active', btn.textContent.trim() === label);
     });
   }
 
