@@ -653,6 +653,7 @@
     if (currentCategory === 'video') {
       wrapper.style.display = 'flex';
       menu.setAttribute('aria-hidden', videoFilterMenuOpen ? 'false' : 'true');
+      menu.classList.toggle('open', videoFilterMenuOpen);
     } else {
       wrapper.style.display = 'none';
       closeVideoFilterMenu();
