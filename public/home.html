@@ -116,6 +116,7 @@
     <!-- 任务入口已移至右上角 -->
     <button class="small-btn" onclick="showAnnouncement()">📢 公告</button>
     <button class="small-btn" onclick="showExtractGuide()">📦 解压方法</button>
+    <button class="small-btn" onclick="showTestDate()">⏰ 测试</button>
     <button class="small-btn" onclick="openMessage()">✉️ 留言</button>
     <!--
     <button class="sign-btn" onclick="signIn()">📅 签到</button>
@@ -198,6 +199,19 @@
     <div class="modal-body">
       <h3>解压方法</h3>
       <div class="link">压缩包密码统一为：<strong>上老王论坛当老王</strong><br><br>将拓展名末尾的"删"字删除即可得到正常压缩包。<br></div>
+    </div>
+  </div>
+</div>
+
+<!-- 测试日期弹窗 -->
+<div class="modal" id="testDateModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="close" onclick="closeTestDate()">✕</span>
+    </div>
+    <div class="modal-body">
+      <h3>当前日期与时间</h3>
+      <div class="link" id="testDateText"></div>
     </div>
   </div>
 </div>
@@ -306,7 +320,7 @@
       
       if (!isAvailable) {
         if (isDaily && completedToday) {
-          statusText = '今日已完成，任务0点刷新';
+          statusText = '今日已完成';
           statusStyle = 'color:#10b981;font-weight:700;';
           inputDisabled = 'disabled';
           buttonDisabled = 'disabled';
@@ -351,7 +365,7 @@
     if (task.is_available === false) {
       const isDaily = (task.task_type || 'once') === 'daily';
       if (isDaily && task.completed_today) {
-        alert('今日任务已完成，任务0点刷新');
+        alert('今日任务已完成');
       } else {
         alert('任务已完成');
       }
@@ -498,6 +512,26 @@
 
   function closeExtractGuide() {
     document.getElementById("extractGuideModal").style.display = "none";
+  }
+
+  function showTestDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    const dateYYMMDD = year.toString().slice(-2) + month + date;
+    const dateString = `日期: ${year}-${month}-${date}<br>时间: ${hours}:${minutes}:${seconds}<br><br>YYMMDD格式: ${dateYYMMDD}`;
+    
+    document.getElementById("testDateText").innerHTML = dateString;
+    document.getElementById("testDateModal").style.display = "flex";
+  }
+
+  function closeTestDate() {
+    document.getElementById("testDateModal").style.display = "none";
   }
 
   function openMessage() {

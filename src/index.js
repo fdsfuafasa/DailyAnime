@@ -6,7 +6,8 @@ async function ensureTaskTables(env) {
     reward_coins INTEGER,
     active INTEGER DEFAULT 1,
     task_type TEXT DEFAULT 'once', -- 'daily' or 'once'
-    code TEXT -- 6-digit code required to submit completion
+    code TEXT, -- 6-digit code required to submit completion
+    date INTEGER -- YYMMDD format for daily tasks, NULL for once tasks
   )`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS user_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,14 +139,22 @@ export default {
       if (url.pathname === "/api/tasks" && method === "GET") {
         await ensureTaskTables(env);
         const username = url.searchParams.get("username");
-        const tasksResult = await env.DB.prepare("SELECT id, title, description, reward_coins, task_type, code FROM tasks WHERE active=1").all();
+        const now = new Date();
+        const todayStr = String(now.getFullYear()).slice(-2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+        const todayNum = parseInt(todayStr);
+        
+        // Fetch once tasks and today's daily tasks
+        const tasksResult = await env.DB.prepare(
+          "SELECT id, title, description, reward_coins, task_type, code, date FROM tasks WHERE active=1 AND (task_type='once' OR (task_type='daily' AND date=?))"
+        ).bind(todayNum).all();
         let tasks = tasksResult.results || [];
+        
         if (username) {
           const completedRows = await env.DB.prepare("SELECT task_id, completed_at FROM user_tasks WHERE username=?").bind(username).all();
           const completed = (completedRows.results || []);
-          const today = new Date().toISOString().split('T')[0];
+          const today = now.toISOString().split('T')[0];
+          
           tasks = tasks.map(task => {
-            // find any completion records for this task
             const records = completed.filter(r => r.task_id == task.id);
             let completedToday = false;
             let completedEver = false;
