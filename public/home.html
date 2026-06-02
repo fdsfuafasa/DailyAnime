@@ -89,7 +89,15 @@
   .category-btn{padding:10px 18px;border:2px solid #e2e8f0;background:#fff;color:var(--text);border-radius:14px;font-weight:700;font-size:0.92rem;cursor:pointer;transition:all .3s ease;}
   .category-btn:hover{border-color:#3b82f6;color:#3b82f6;}
   .category-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6;box-shadow:0 10px 22px rgba(59,130,246,.22);}
-  @media (max-width: 420px){.container{padding:18px 12px 22px;}.top,.donate-card,.modal-box{border-radius:20px;}.sign-btn{padding:13px 16px;font-size:0.98rem;}.donate-img{width:100%;}.top button{flex:1 1 100%;}.top .user-name{flex:1 1 100%;}.search-box{padding:12px;}.search-btn,.clear-btn{width:100%;}.task-action{flex-direction:column;align-items:stretch;}.tasks-panel{max-width:100%;padding:18px 14px;}.modal-body{padding:0 16px 20px;}.link{font-size:0.92rem;}.top-right{justify-content:space-between;}.task-box{width:100%;justify-content:center;}.category-tabs{padding:12px;gap:8px;}} 
+  .video-filter{position:relative;display:flex;align-items:center;}
+  .filter-toggle{padding:10px 16px;border:2px solid #e2e8f0;background:#fff;color:var(--text);border-radius:14px;font-weight:700;font-size:0.92rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .filter-caret{font-size:0.95rem;transform:translateY(1px);}
+  .filter-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid #e2e8f0;border-radius:18px;box-shadow:var(--shadow);padding:8px;display:none;flex-direction:column;min-width:160px;z-index:10;}
+  .filter-menu.open{display:flex;}
+  .filter-option{background:none;border:none;text-align:left;padding:10px 12px;border-radius:14px;color:var(--text);cursor:pointer;font-weight:700;font-size:0.92rem;transition:background .2s ease;}
+  .filter-option:hover{background:#eef4ff;}
+  .filter-option.active{background:#3b82f6;color:#fff;}
+  @media (max-width: 420px){.container{padding:18px 12px 22px;}.top,.donate-card,.modal-box{border-radius:20px;}.sign-btn{padding:13px 16px;font-size:0.98rem;}.donate-img{width:100%;}.top button{flex:1 1 100%;}.top .user-name{flex:1 1 100%;}.search-box{padding:12px;}.search-btn,.clear-btn{width:100%;}.task-action{flex-direction:column;align-items:stretch;}.tasks-panel{max-width:100%;padding:18px 14px;}.modal-body{padding:0 16px 20px;}.link{font-size:0.92rem;}.top-right{justify-content:space-between;}.task-box{width:100%;justify-content:center;}.category-tabs{padding:12px;gap:8px;}.video-filter{width:100%;}.filter-toggle{width:100%;justify-content:space-between;}.filter-menu{min-width:auto;width:100%;right:0;}} 
   @media (max-width: 320px){.top{padding:14px 12px;}.search-input{font-size:0.92rem;}.buy-btn,.btn-bought{padding:12px 0;}.card{min-height:auto;}.top .small-btn{padding:8px 10px;}}
 </style>
 </head>
@@ -136,8 +144,17 @@
 
 <!-- 分类标签 -->
 <div class="category-tabs">
-  <button class="category-btn active" onclick="switchCategory('video')">📺 里番</button>
-  <button class="category-btn" onclick="switchCategory('comic')">📚 本子</button>
+  <button class="category-btn active" onclick="switchCategory(event, 'video')">📺 里番</button>
+  <button class="category-btn" onclick="switchCategory(event, 'comic')">📚 本子</button>
+  <div id="videoFilterWrapper" class="video-filter">
+    <button id="videoFilterToggle" class="filter-toggle" onclick="toggleVideoFilterMenu()">类型 <span class="filter-caret">▾</span></button>
+    <div id="videoFilterMenu" class="filter-menu" aria-hidden="true">
+      <button class="filter-option active" onclick="selectVideoFilter('all')">全部</button>
+      <button class="filter-option" onclick="selectVideoFilter('original')">原版</button>
+      <button class="filter-option" onclick="selectVideoFilter('edited')">剪辑版</button>
+      <button class="filter-option" onclick="selectVideoFilter('cracked')">破解版</button>
+    </div>
+  </div>
 </div>
 
 <!-- 任务中心（侧滑面板） -->
@@ -252,6 +269,8 @@
   let allTasks = [];
   let currentSearchQuery = "";
   let currentCategory = 'video';
+  let currentVideoFilter = 'all';
+  let videoFilterMenuOpen = false;
 
   window.onload = initPage;
 
@@ -396,26 +415,42 @@
     const r = await fetch("/api/items");
     const data = await r.json();
     allItems = (data.items || []).sort((a, b) => b.id - a.id);
+    updateVideoFilterUI();
     filterAndRenderItems();
+  }
+
+  function filterVideoItem(item) {
+    if (currentCategory !== 'video' || currentVideoFilter === 'all') return true;
+    if (currentVideoFilter === 'original') return item.link_1 && item.link_1.toString().trim() !== '';
+    if (currentVideoFilter === 'edited') return item.link_2 && item.link_2.toString().trim() !== '';
+    if (currentVideoFilter === 'cracked') return item.link_3 && item.link_3.toString().trim() !== '';
+    return true;
   }
 
   function filterAndRenderItems() {
     let filtered = allItems.filter(item => item.type === currentCategory);
+    if (currentCategory === 'video') {
+      filtered = filtered.filter(filterVideoItem);
+    }
     if (currentSearchQuery) {
       filtered = filtered.filter(item => item.name.toLowerCase().includes(currentSearchQuery.toLowerCase()));
     }
     renderItems(filtered);
   }
 
-  function switchCategory(category) {
+  function switchCategory(evt, category) {
     if (currentCategory === category) return;
     currentCategory = category;
+    if (category !== 'video') {
+      closeVideoFilterMenu();
+    }
     currentSearchQuery = "";
     document.getElementById("searchInput").value = "";
     document.querySelectorAll(".category-btn").forEach(btn => {
       btn.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if (evt && evt.target) evt.target.classList.add('active');
+    updateVideoFilterUI();
     filterAndRenderItems();
   }
 
@@ -573,6 +608,9 @@
     }
     currentSearchQuery = query;
     let filtered = allItems.filter(item => item.type === currentCategory && item.name.toLowerCase().includes(query));
+    if (currentCategory === 'video') {
+      filtered = filtered.filter(filterVideoItem);
+    }
     if (filtered.length === 0) {
       alert("未找到匹配的商品");
       document.getElementById("items").innerHTML = "";
@@ -607,6 +645,62 @@
       loadTasks();
     }
   }
+
+  function updateVideoFilterUI() {
+    const wrapper = document.getElementById('videoFilterWrapper');
+    const menu = document.getElementById('videoFilterMenu');
+    if (!wrapper || !menu) return;
+    if (currentCategory === 'video') {
+      wrapper.style.display = 'flex';
+      menu.setAttribute('aria-hidden', videoFilterMenuOpen ? 'false' : 'true');
+    } else {
+      wrapper.style.display = 'none';
+      closeVideoFilterMenu();
+    }
+    document.querySelectorAll('.filter-option').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.trim() === getFilterLabel(currentVideoFilter));
+    });
+  }
+
+  function getFilterLabel(filter) {
+    if (filter === 'all') return '全部';
+    if (filter === 'original') return '原版';
+    if (filter === 'edited') return '剪辑版';
+    if (filter === 'cracked') return '破解版';
+    return '';
+  }
+
+  function toggleVideoFilterMenu() {
+    videoFilterMenuOpen = !videoFilterMenuOpen;
+    const menu = document.getElementById('videoFilterMenu');
+    if (!menu) return;
+    menu.classList.toggle('open', videoFilterMenuOpen);
+    menu.setAttribute('aria-hidden', videoFilterMenuOpen ? 'false' : 'true');
+  }
+
+  function closeVideoFilterMenu() {
+    videoFilterMenuOpen = false;
+    const menu = document.getElementById('videoFilterMenu');
+    if (!menu) return;
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+  }
+
+  function selectVideoFilter(filter) {
+    currentVideoFilter = filter;
+    videoFilterMenuOpen = false;
+    updateVideoFilterUI();
+    filterAndRenderItems();
+  }
+
+  document.addEventListener('click', function(e) {
+    const toggle = document.getElementById('videoFilterToggle');
+    const menu = document.getElementById('videoFilterMenu');
+    if (!toggle || !menu) return;
+    if (e.target !== toggle && !toggle.contains(e.target) && !menu.contains(e.target)) {
+      closeVideoFilterMenu();
+    }
+  });
 
   // 打赏弹窗
   function openDonate() { document.getElementById("donateModal").style.display = "flex"; }
