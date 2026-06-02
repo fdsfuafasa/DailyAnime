@@ -364,7 +364,7 @@
   async function loadItems() {
     const r = await fetch("/api/items");
     const data = await r.json();
-    allItems = data.items;
+    allItems = (data.items || []).sort((a, b) => b.id - a.id);
     filterAndRenderItems();
   }
 
