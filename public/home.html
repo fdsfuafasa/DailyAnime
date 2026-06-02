@@ -20,9 +20,9 @@
   .container{max-width:500px;margin:0 auto;padding:20px 16px 24px;}
   .top{background:var(--surface);padding:18px 16px;border-radius:26px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;box-shadow:var(--shadow);}
   .top .user-name{font-size:0.95rem;font-weight:700;word-break:break-word;flex:1 1 100%;}
-  .top button{flex:1 1 140px;min-width:0;border:none;background:#e2e8f0;color:var(--text);padding:10px 12px;border-radius:14px;font-weight:700;font-size:0.88rem;cursor:pointer;white-space:nowrap;}
+  .top button{flex:0 1 auto;min-width:110px;border:none;background:#e2e8f0;color:var(--text);padding:10px 12px;border-radius:14px;font-weight:700;font-size:0.88rem;cursor:pointer;white-space:nowrap;}
   .top button#topActionButton{min-width:110px;}
-  .top .small-btn{padding:8px 12px;font-size:0.86rem;}
+  .top .small-btn{flex:0 1 auto;padding:8px 12px;font-size:0.86rem;}
   .top-right{position:sticky;top:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:16px;z-index:10;}
   .coin-box{background:linear-gradient(135deg,#ffd700,#ff9500);color:#fff;padding:10px 14px;border-radius:999px;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 12px 28px rgba(255,149,0,.18);}
   .donate-btn{background:linear-gradient(135deg,#ff6699,#ff3366);color:#fff;border:none;padding:10px 16px;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px rgba(255,51,102,.18);}
@@ -64,7 +64,8 @@
   .item-meta{color:#64748b;font-size:0.84rem;line-height:1.4;margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
   .item-meta span{background:rgba(59,130,246,.08);padding:6px 10px;border-radius:999px;}
   .price{color:#fb923c;margin:0 0 10px;font-size:0.88rem;}
-  button{width:100%;padding:14px 0;border:none;border-radius:16px;font-weight:800;color:#fff;font-size:0.97rem;cursor:pointer;transition:transform .2s ease,filter .2s ease;}
+  button{width:auto;padding:14px 0;border:none;border-radius:16px;font-weight:800;color:#fff;font-size:0.97rem;cursor:pointer;transition:transform .2s ease,filter .2s ease;}
+  .card button{width:100%;}
   button:hover{transform:translateY(-1px);}
   .buy-btn{background:linear-gradient(135deg,#2563eb,#3b82f6);box-shadow:0 10px 22px rgba(59,130,246,.22);}
   .buy-btn:hover{filter:brightness(1.05);}
@@ -97,7 +98,7 @@
   .filter-option{background:none;border:none;text-align:left;padding:10px 12px;border-radius:14px;color:var(--text);cursor:pointer;font-weight:700;font-size:0.92rem;transition:background .2s ease;}
   .filter-option:hover{background:#eef4ff;}
   .filter-option.active{background:#3b82f6;color:#fff;}
-  @media (max-width: 420px){.container{padding:18px 12px 22px;}.top,.donate-card,.modal-box{border-radius:20px;}.sign-btn{padding:13px 16px;font-size:0.98rem;}.donate-img{width:100%;}.top button{flex:1 1 100%;}.top .user-name{flex:1 1 100%;}.search-box{padding:12px;}.search-btn,.clear-btn{width:100%;}.task-action{flex-direction:column;align-items:stretch;}.tasks-panel{max-width:100%;padding:18px 14px;}.modal-body{padding:0 16px 20px;}.link{font-size:0.92rem;}.top-right{justify-content:space-between;}.task-box{width:100%;justify-content:center;}.category-tabs{padding:12px;gap:8px;}.video-filter{width:100%;}.filter-toggle{width:100%;justify-content:space-between;}.filter-menu{min-width:auto;width:100%;right:0;}} 
+  @media (max-width: 420px){.container{padding:18px 12px 22px;}.top,.donate-card,.modal-box{border-radius:20px;}.sign-btn{padding:13px 16px;font-size:0.98rem;}.donate-img{width:100%;}.top button{flex:0 1 auto;}.top .user-name{flex:1 1 100%;}.search-box{padding:12px;}.task-action{flex-direction:column;align-items:stretch;}.tasks-panel{max-width:100%;padding:18px 14px;}.modal-body{padding:0 16px 20px;}.link{font-size:0.92rem;}.top-right{justify-content:space-between;}.task-box{justify-content:center;}.category-tabs{padding:12px;gap:8px;}.video-filter{width:100%;}.filter-toggle{width:100%;justify-content:space-between;}.filter-menu{min-width:auto;width:100%;right:0;}} 
   @media (max-width: 320px){.top{padding:14px 12px;}.search-input{font-size:0.92rem;}.buy-btn,.btn-bought{padding:12px 0;}.card{min-height:auto;}.top .small-btn{padding:8px 10px;}}
 </style>
 </head>
