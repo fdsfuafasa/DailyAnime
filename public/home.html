@@ -355,10 +355,19 @@
         }
       }
       
+      let description = task.description;
+      if (task.id === 3 && typeof description === 'string') {
+        description = description.replace(/https:\/\//g, '\nhttps://');
+        description = description.replace(/即可获得/g, '\n即可获得');
+        description = description.replace(/\n+/g, '\n');
+        description = description.trim();
+        description = description.replace(/\n/g, '<br>');
+      }
+      
       dom.innerHTML += `
         <div class="task-card" ${!isAvailable ? 'style="opacity:0.7;"' : ''}>
           <h4>${task.title}</h4>
-          <div class="task-desc">${task.description}</div>
+          <div class="task-desc">${description}</div>
           <div class="task-action">
             <div class="task-reward">+${task.reward_coins} 金币</div>
             <div style="display:flex;gap:8px;align-items:center;width:100%;${!isAvailable ? 'opacity:0.6;' : ''}">
