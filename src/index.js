@@ -56,6 +56,16 @@ async function ensureItemsTable(env) {
   )`).run();
 }
 
+// 返回指定日期（默认现在）的北京时间（Asia/Shanghai）格式化为 YYYY-MM-DD
+function beijingDateString(d = new Date()) {
+  try {
+    return new Intl.DateTimeFormat('sv', { timeZone: 'Asia/Shanghai' }).format(d);
+  } catch (e) {
+    // fallback: 使用固定偏移 UTC+8（在极少数环境下 Intl 可能不可用）
+    const sh = new Date(d.getTime() + 8 * 3600000);
+    return sh.toISOString().split('T')[0];
+  }
+}
 export default {
   async fetch(request, env) {
     try {
@@ -123,10 +133,10 @@ export default {
         return Response.json({ ok: true, msg: "留言已发送" });
       }
 
-      // 签到
+      // 签到（按北京时间）
       if (url.pathname === "/api/sign" && method === "POST") {
         const { username } = await request.json();
-        const today = new Date().toISOString().split("T")[0];
+        const today = beijingDateString();
         const signed = await env.DB.prepare("SELECT * FROM sign_in WHERE username=? AND date=?").bind(username, today).first();
         if (signed) return Response.json({ ok: false, msg: "今天已签到" });
         await env.DB.prepare("INSERT INTO sign_in (username, date) VALUES (?,?)").bind(username, today).run();
@@ -140,32 +150,32 @@ export default {
         await ensureTaskTables(env);
         const username = url.searchParams.get("username");
         const now = new Date();
-        const todayStr = String(now.getFullYear()).slice(-2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-        const todayNum = parseInt(todayStr);
-        
-        // Fetch once tasks and today's daily tasks
+        const beijingDate = beijingDateString(now); // YYYY-MM-DD
+        const todayNum = parseInt(beijingDate.slice(2).replace(/-/g, ''));
+
+        // Fetch once tasks and today's daily tasks (date 存储为 YYMMDD)
         const tasksResult = await env.DB.prepare(
           "SELECT id, title, description, reward_coins, task_type, code, date FROM tasks WHERE active=1 AND (task_type='once' OR (task_type='daily' AND date=?))"
         ).bind(todayNum).all();
         let tasks = tasksResult.results || [];
-        
+
         if (username) {
           const completedRows = await env.DB.prepare("SELECT task_id, completed_at FROM user_tasks WHERE username=?").bind(username).all();
           const completed = (completedRows.results || []);
-          const today = now.toISOString().split('T')[0];
-          
+          const today = beijingDate; // 使用北京时间日期
+
           tasks = tasks.map(task => {
             const records = completed.filter(r => r.task_id == task.id);
             let completedToday = false;
             let completedEver = false;
-            
+
             if (records && records.length > 0) {
               completedEver = true;
               completedToday = records.some(r => {
-                try { return r.completed_at.split('T')[0] === today; } catch (e) { return false; }
+                try { return beijingDateString(new Date(r.completed_at)) === today; } catch (e) { return false; }
               });
             }
-            
+
             return {
               ...task,
               completed_today: completedToday,
@@ -187,12 +197,12 @@ export default {
         // verify code
         if (!task.code || task.code.toString().trim() !== code.toString().trim()) return Response.json({ ok: false, msg: "验证码错误" });
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = beijingDateString();
         if ((task.task_type || 'once') === 'daily') {
           const doneToday = await env.DB.prepare("SELECT * FROM user_tasks WHERE username=? AND task_id=?").bind(username, task_id).all();
           const records = (doneToday.results || []);
           const already = records.some(r => {
-            try { return r.completed_at.split('T')[0] === today; } catch (e) { return false; }
+            try { return beijingDateString(new Date(r.completed_at)) === today; } catch (e) { return false; }
           });
           if (already) return Response.json({ ok: false, msg: "今日任务已完成" });
           await env.DB.prepare("INSERT INTO user_tasks (username, task_id, completed_at) VALUES (?,?,?)").bind(username, task_id, new Date().toISOString()).run();
