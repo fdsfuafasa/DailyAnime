@@ -62,14 +62,14 @@
   .card{background:var(--surface);border-radius:24px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-shadow:var(--shadow);min-height:240px;position:relative;overflow:hidden;}
   .image-wrapper{position:relative;width:100%;}
   .card img{width:100%;aspect-ratio:1 / 1;border-radius:16px;object-fit:cover;display:block;}
-  .label-badges{position:absolute;top:10px;left:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:2;}
-  .label-badge{background:rgba(0,0,0,.72);color:#fff;padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700;}
-  .item-meta{color:#64748b;font-size:0.82rem;line-height:1.4;margin:10px 0 0;display:flex;gap:8px;justify-content:center;flex-wrap:nowrap;white-space:nowrap;}
+  .label-badges{position:absolute;top:6px;left:6px;display:flex;flex-wrap:wrap;gap:6px;z-index:2;}
+  .label-badge{background:rgba(0,0,0,.72);color:#fff;padding:4px 8px;border-radius:999px;font-size:0.72rem;font-weight:700;}
+  .item-meta{color:#64748b;font-size:0.82rem;line-height:1.4;margin:6px 0 0;display:flex;gap:8px;justify-content:center;flex-wrap:nowrap;white-space:nowrap;}
   .item-meta span{background:rgba(59,130,246,.08);padding:6px 10px;border-radius:999px;}
-  .name{font-weight:800;margin:8px 0 6px;font-size:0.92rem;line-height:1.4;min-height:2.5em;text-align:center;}
+  .name{font-weight:800;margin:8px 0 4px;font-size:0.92rem;line-height:1.4;min-height:2.5em;text-align:center;}
   .price{color:#fb923c;margin:0 0 10px;font-size:0.88rem;}
-  button{width:auto;padding:14px 0;border:none;border-radius:16px;font-weight:800;color:#fff;font-size:0.97rem;cursor:pointer;transition:transform .2s ease,filter .2s ease;}
-  .card button{width:100%;margin-top:10px;}
+  button{width:auto;padding:10px 0;border:none;border-radius:16px;font-weight:800;color:#fff;font-size:0.9rem;cursor:pointer;transition:transform .2s ease,filter .2s ease;}
+  .card button{width:100%;margin-top:8px;}
   button:hover{transform:translateY(-1px);}
   .buy-btn{background:linear-gradient(135deg,#2563eb,#3b82f6);box-shadow:0 10px 22px rgba(59,130,246,.22);}
   .buy-btn:hover{filter:brightness(1.05);}
@@ -501,8 +501,8 @@
             <img src="${it.image}" onerror="this.onerror=null;this.src='/image/placeholder.png';console.error('image load error','${it.image}');">
             <div class="label-badges">${labelHtml}</div>
           </div>
-          <div class="item-meta"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
           <div class="name">${it.name}</div>
+          <div class="item-meta"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
           <button class="${actionClass}" onclick="${actionHandler}">${actionLabel}</button>
         </div>
       `;
