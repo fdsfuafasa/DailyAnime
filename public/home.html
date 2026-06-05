@@ -153,13 +153,10 @@
   <button class="category-btn active" onclick="switchCategory(event, 'video')">📺 里番</button>
   <button class="category-btn" onclick="switchCategory(event, 'comic')">📚 本子</button>
   <div id="videoFilterWrapper" class="video-filter">
-    <button id="videoFilterToggle" class="filter-toggle" onclick="toggleVideoFilterMenu()">全部 <span class="filter-caret">▾</span></button>
-    <div id="videoFilterMenu" class="filter-menu" aria-hidden="true">
-      <button class="filter-option active" onclick="selectVideoFilter('all')">全部</button>
-      <button class="filter-option" onclick="selectVideoFilter('original')">原版</button>
-      <button class="filter-option" onclick="selectVideoFilter('edited')">剪辑版</button>
-      <button class="filter-option" onclick="selectVideoFilter('cracked')">破解版</button>
-    </div>
+    <button class="filter-option active" data-filter="all" onclick="selectVideoFilter('all')">全部</button>
+    <button class="filter-option" data-filter="original" onclick="selectVideoFilter('original')">原版</button>
+    <button class="filter-option" data-filter="edited" onclick="selectVideoFilter('edited')">剪辑版</button>
+    <button class="filter-option" data-filter="cracked" onclick="selectVideoFilter('cracked')">破解版</button>
   </div>
 </div>
 
@@ -276,7 +273,6 @@
   let currentSearchQuery = "";
   let currentCategory = 'video';
   let currentVideoFilter = 'all';
-  let videoFilterMenuOpen = false;
 
   window.onload = initPage;
 
@@ -456,9 +452,6 @@
   function switchCategory(evt, category) {
     if (currentCategory === category) return;
     currentCategory = category;
-    if (category !== 'video') {
-      closeVideoFilterMenu();
-    }
     currentSearchQuery = "";
     document.getElementById("searchInput").value = "";
     document.querySelectorAll(".category-btn").forEach(btn => {
@@ -721,63 +714,18 @@
 
   function updateVideoFilterUI() {
     const wrapper = document.getElementById('videoFilterWrapper');
-    const toggle = document.getElementById('videoFilterToggle');
-    const menu = document.getElementById('videoFilterMenu');
-    if (!wrapper || !menu || !toggle) return;
-    if (currentCategory === 'video') {
-      wrapper.style.display = 'flex';
-      menu.setAttribute('aria-hidden', videoFilterMenuOpen ? 'false' : 'true');
-      menu.classList.toggle('open', videoFilterMenuOpen);
-    } else {
-      wrapper.style.display = 'none';
-      closeVideoFilterMenu();
-    }
-    const label = getFilterLabel(currentVideoFilter);
-    toggle.innerHTML = `${label} <span class="filter-caret">▾</span>`;
+    if (!wrapper) return;
+    wrapper.style.display = currentCategory === 'video' ? 'flex' : 'none';
     document.querySelectorAll('.filter-option').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent.trim() === label);
+      btn.classList.toggle('active', btn.dataset.filter === currentVideoFilter);
     });
-  }
-
-  function getFilterLabel(filter) {
-    if (filter === 'all') return '全部';
-    if (filter === 'original') return '原版';
-    if (filter === 'edited') return '剪辑版';
-    if (filter === 'cracked') return '破解版';
-    return '';
-  }
-
-  function toggleVideoFilterMenu() {
-    videoFilterMenuOpen = !videoFilterMenuOpen;
-    const menu = document.getElementById('videoFilterMenu');
-    if (!menu) return;
-    menu.classList.toggle('open', videoFilterMenuOpen);
-    menu.setAttribute('aria-hidden', videoFilterMenuOpen ? 'false' : 'true');
-  }
-
-  function closeVideoFilterMenu() {
-    videoFilterMenuOpen = false;
-    const menu = document.getElementById('videoFilterMenu');
-    if (!menu) return;
-    menu.classList.remove('open');
-    menu.setAttribute('aria-hidden', 'true');
   }
 
   function selectVideoFilter(filter) {
     currentVideoFilter = filter;
-    videoFilterMenuOpen = false;
     updateVideoFilterUI();
     filterAndRenderItems();
   }
-
-  document.addEventListener('click', function(e) {
-    const toggle = document.getElementById('videoFilterToggle');
-    const menu = document.getElementById('videoFilterMenu');
-    if (!toggle || !menu) return;
-    if (e.target !== toggle && !toggle.contains(e.target) && !menu.contains(e.target)) {
-      closeVideoFilterMenu();
-    }
-  });
 
   // 打赏弹窗
   function openDonate() { document.getElementById("donateModal").style.display = "flex"; }
