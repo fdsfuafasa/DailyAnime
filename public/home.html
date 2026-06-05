@@ -543,11 +543,21 @@
     const item = data.items.find(i => i.id == itemId);
     if (!item) return alert('商品不存在');
     const labels = ['原版','剪辑版','破解'];
+    const linkTypeLabels = ['百度盘', '迅雷盘'];
     const purchasedTypes = (boughtMap[itemId] || []).filter(t => item[`link_${t}`] && item[`link_${t}`].toString().trim() !== '');
     if (purchasedTypes.length === 0) return alert('尚未购买任何链接');
     const html = purchasedTypes.map(t => {
-      const link = item[`link_${t}`];
-      return `<div><strong>${labels[t-1]}：</strong>${link || '链接不存在'}</div>`;
+      const link1 = item[`link_${t}`];
+      const link2 = item[`link_${t}_2`];
+      let typeHtml = `<div><strong>${labels[t-1]}</strong><br>`;
+      if (link1 && link1.toString().trim() !== '') {
+        typeHtml += `${linkTypeLabels[0]}：${link1}<br>`;
+      }
+      if (link2 && link2.toString().trim() !== '') {
+        typeHtml += `${linkTypeLabels[1]}：${link2}`;
+      }
+      typeHtml += `</div>`;
+      return typeHtml;
     }).join('');
     document.getElementById("linkText").innerHTML = html;
     document.getElementById("linkModal").style.display = "flex";
