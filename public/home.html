@@ -74,6 +74,12 @@
   .buy-btn{background:linear-gradient(135deg,#2563eb,#3b82f6);box-shadow:0 10px 22px rgba(59,130,246,.22);}
   .buy-btn:hover{filter:brightness(1.05);}
   .btn-bought{background:#10b981;box-shadow:0 10px 18px rgba(16,185,129,.18);}
+  .pagination{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:16px 0;}
+  .pagination button{border:none;background:#f1f5f9;color:#0f172a;padding:10px 14px;border-radius:14px;font-weight:700;cursor:pointer;transition:all .2s ease;}
+  .pagination button:hover:not(:disabled){background:#e2e8f0;}
+  .pagination button.active{background:#3b82f6;color:#fff;}
+  .pagination button:disabled{opacity:0.5;cursor:not-allowed;}
+  .page-ellipsis{padding:10px 4px;color:#64748b;font-weight:700;}
   .modal{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;justify-content:center;align-items:center;padding:16px;z-index:999;}
   .modal-box{position:relative;background:var(--surface);width:100%;max-width:420px;border-radius:24px;overflow:hidden;box-shadow:var(--shadow);}
   .modal-header{padding:16px;text-align:right;}
@@ -173,6 +179,7 @@
 
 <!-- 商品 -->
 <div class="grid" id="items"></div>
+<div id="pagination" class="pagination"></div>
 
 <!-- 链接弹窗 -->
 <div class="modal" id="linkModal">
@@ -273,6 +280,8 @@
   let currentSearchQuery = "";
   let currentCategory = 'video';
   let currentVideoFilter = 'all';
+  let currentPage = 1;
+  const itemsPerPage = 20;
 
   window.onload = initPage;
 
@@ -446,13 +455,62 @@
     if (currentSearchQuery) {
       filtered = filtered.filter(item => item.name.toLowerCase().includes(currentSearchQuery.toLowerCase()));
     }
-    renderItems(filtered);
+
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const pageItems = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+    renderItems(pageItems);
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    const dom = document.getElementById('pagination');
+    if (!dom) return;
+
+    if (totalPages <= 1) {
+      dom.innerHTML = '';
+      return;
+    }
+
+    const buttons = [];
+    buttons.push(`<button onclick="gotoPage(${Math.max(1, currentPage - 1)})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`);
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+      buttons.push(`<button onclick="gotoPage(1)">1</button>`);
+      if (startPage > 2) buttons.push(`<span class="page-ellipsis">...</span>`);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(`<button class="${i === currentPage ? 'active' : ''}" onclick="gotoPage(${i})">${i}</button>`);
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) buttons.push(`<span class="page-ellipsis">...</span>`);
+      buttons.push(`<button onclick="gotoPage(${totalPages})">${totalPages}</button>`);
+    }
+
+    buttons.push(`<button onclick="gotoPage(${Math.min(totalPages, currentPage + 1)})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`);
+    dom.innerHTML = buttons.join('');
+  }
+
+  function gotoPage(page) {
+    if (page === currentPage) return;
+    currentPage = page;
+    filterAndRenderItems();
   }
 
   function switchCategory(evt, category) {
     if (currentCategory === category) return;
     currentCategory = category;
     currentSearchQuery = "";
+    currentPage = 1;
     document.getElementById("searchInput").value = "";
     document.querySelectorAll(".category-btn").forEach(btn => {
       btn.classList.remove('active');
@@ -695,16 +753,8 @@
       return;
     }
     currentSearchQuery = query;
-    let filtered = allItems.filter(item => item.type === currentCategory && item.name.toLowerCase().includes(query));
-    if (currentCategory === 'video') {
-      filtered = filtered.filter(filterVideoItem);
-    }
-    if (filtered.length === 0) {
-      alert("未找到匹配的商品");
-      document.getElementById("items").innerHTML = "";
-      return;
-    }
-    renderItems(filtered);
+    currentPage = 1;
+    filterAndRenderItems();
   }
 
   function clearSearch() {
