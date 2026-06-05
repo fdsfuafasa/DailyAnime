@@ -57,16 +57,19 @@
   .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
   @media (max-width: 860px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));}}
   @media (max-width: 660px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
-  @media (max-width: 520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-  @media (max-width: 380px){.grid{grid-template-columns:repeat(1,minmax(0,1fr));}}
-  .card{background:var(--surface);border-radius:24px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-shadow:var(--shadow);min-height:240px;}
-  .card img{width:100%;aspect-ratio:1 / 1;border-radius:16px;object-fit:cover;}
-  .name{font-weight:800;margin:12px 0 6px;font-size:0.92rem;line-height:1.4;min-height:2.5em;}
-  .item-meta{color:#64748b;font-size:0.84rem;line-height:1.4;margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
-  .item-meta span{background:rgba(59,130,246,.08);padding:6px 10px;border-radius:999px;}
+  @media (max-width: 520px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  @media (max-width: 380px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  .card{background:var(--surface);border-radius:24px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;box-shadow:var(--shadow);min-height:240px;position:relative;overflow:hidden;}
+  .image-wrapper{position:relative;width:100%;}
+  .card img{width:100%;aspect-ratio:1 / 1;border-radius:16px;object-fit:cover;display:block;}
+  .label-badges{position:absolute;top:10px;left:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:2;}
+  .label-badge{background:rgba(0,0,0,.72);color:#fff;padding:4px 8px;border-radius:999px;font-size:0.75rem;font-weight:700;}
+  .info-overlay{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(0,0,0,.56);color:#fff;border-radius:14px;padding:8px 10px;font-size:0.78rem;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;z-index:2;}
+  .name{font-weight:800;margin:12px 0 6px;font-size:0.92rem;line-height:1.4;min-height:2.5em;text-align:center;}
+  .item-meta{display:none;}
   .price{color:#fb923c;margin:0 0 10px;font-size:0.88rem;}
   button{width:auto;padding:14px 0;border:none;border-radius:16px;font-weight:800;color:#fff;font-size:0.97rem;cursor:pointer;transition:transform .2s ease,filter .2s ease;}
-  .card button{width:100%;}
+  .card button{width:100%;margin-top:10px;}
   button:hover{transform:translateY(-1px);}
   .buy-btn{background:linear-gradient(135deg,#2563eb,#3b82f6);box-shadow:0 10px 22px rgba(59,130,246,.22);}
   .buy-btn:hover{filter:brightness(1.05);}
@@ -128,9 +131,9 @@
     <button class="small-btn" onclick="showAnnouncement()">📢 公告</button>
     
     <button class="small-btn" onclick="showExtractGuide()">📦 解压方法</button>
-    
+    <!--
     <button class="small-btn" onclick="showTestDate()">⏰ 测试</button>
-    
+    -->
     <button class="small-btn" onclick="openMessage()">✉️ 留言</button>
     <!--
     <button class="sign-btn" onclick="signIn()">📅 签到</button>
@@ -472,15 +475,19 @@
     console.log('renderItems', items ? items.length : 0);
     items.forEach(it => {
       console.log('item image', it.id, it.image);
-      let buttonsHtml = "";
       const labels = ['原版','剪辑版','破解'];
+      const availableLabels = [];
       for (let t = 1; t <= 3; t++) {
         const field = it[`link_${t}`];
-        if (!field || field.toString().trim() === '') continue;
-        const isBought = boughtMap[it.id] && boughtMap[it.id].includes(t);
-        if (isBought) buttonsHtml += `<button class="btn-bought" onclick="showLink(${it.id},${t})">${labels[t-1]}</button>`;
-        else buttonsHtml += `<button class="buy-btn" onclick="buy(${it.id},${t})">🔒 ${labels[t-1]}</button>`;
+        if (field && field.toString().trim() !== '') {
+          availableLabels.push(labels[t-1]);
+        }
       }
+      const labelHtml = availableLabels.map(label => `<span class="label-badge">${label}</span>`).join('');
+      const purchasedTypes = (boughtMap[it.id] || []).filter(t => it[`link_${t}`] && it[`link_${t}`].toString().trim() !== '');
+      const actionLabel = purchasedTypes.length > 0 ? '链接' : '购买';
+      const actionClass = purchasedTypes.length > 0 ? 'btn-bought' : 'buy-btn';
+      const actionHandler = purchasedTypes.length > 0 ? `showItemLinks(${it.id})` : `showBuyOptions(${it.id})`;
 
       const lengthLabel = it.type === 'video'
         ? `时长：${it.length || '-'}`
@@ -490,13 +497,67 @@
       const sizeLabel = `大小：${it.size || '-'}`;
       dom.innerHTML += `
         <div class="card">
-          <img src="${it.image}" onerror="this.onerror=null;this.src='/image/placeholder.png';console.error('image load error','${it.image}');">
+          <div class="image-wrapper">
+            <img src="${it.image}" onerror="this.onerror=null;this.src='/image/placeholder.png';console.error('image load error','${it.image}');">
+            <div class="label-badges">${labelHtml}</div>
+            <div class="info-overlay"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
+          </div>
           <div class="name">${it.name}</div>
-          <div class="item-meta"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
-          ${buttonsHtml}
+          <button class="${actionClass}" onclick="${actionHandler}">${actionLabel}</button>
         </div>
       `;
     });
+  }
+
+  function showBuyOptions(itemId) {
+    if (!user) {
+      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/register.html';
+      return;
+    }
+    const item = allItems.find(i => i.id == itemId);
+    if (!item) return alert('商品不存在');
+    const labels = ['原版','剪辑版','破解'];
+    const options = [];
+    for (let t = 1; t <= 3; t++) {
+      const link = item[`link_${t}`];
+      if (link && link.toString().trim() !== '') {
+        options.push({ type: t, label: labels[t-1] });
+      }
+    }
+    if (options.length === 0) return alert('暂无可购买的链接');
+    if (options.length === 1) {
+      buy(itemId, options[0].type);
+      return;
+    }
+    let promptText = '请选择购买类型：\n';
+    options.forEach((option, index) => {
+      promptText += `${index + 1}. ${option.label}\n`;
+    });
+    const choice = prompt(promptText);
+    if (!choice) return;
+    const selected = options[Number(choice) - 1];
+    if (!selected) return alert('无效选择');
+    buy(itemId, selected.type);
+  }
+
+  async function showItemLinks(itemId) {
+    if (!user) {
+      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/register.html';
+      return;
+    }
+    const r = await fetch("/api/items");
+    const data = await r.json();
+    const item = data.items.find(i => i.id == itemId);
+    if (!item) return alert('商品不存在');
+    const labels = ['原版','剪辑版','破解'];
+    const purchasedTypes = (boughtMap[itemId] || []).filter(t => item[`link_${t}`] && item[`link_${t}`].toString().trim() !== '');
+    if (purchasedTypes.length === 0) return alert('尚未购买任何链接');
+    const html = purchasedTypes.map(t => {
+      const link = item[`link_${t}`];
+      return `<div><strong>${labels[t-1]}：</strong>${link || '链接不存在'}</div>`;
+    }).join('');
+    document.getElementById("linkText").innerHTML = html;
+    document.getElementById("linkModal").style.display = "flex";
   }
 
   async function buy(itemId, type) {
