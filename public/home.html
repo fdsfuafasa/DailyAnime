@@ -488,6 +488,19 @@
           ? `${it.length || '-'} 张`
           : `${it.length || '-'}`;
       const sizeLabel = `${it.size || '-'}`;
+       const availableDiskTypes = [];
+       for (let t = 1; t <= 3; t++) {
+         const link1 = it[`link_${t}`];
+         const link2 = it[`link_${t}_2`];
+         if (link1 && link1.toString().trim() !== '') {
+           availableDiskTypes.push('百度盘');
+         }
+         if (link2 && link2.toString().trim() !== '') {
+           availableDiskTypes.push('迅雷盘');
+         }
+       }
+       const uniqueDiskTypes = [...new Set(availableDiskTypes)];
+       const diskLabel = uniqueDiskTypes.length > 0 ? uniqueDiskTypes.join('，') : '';
       dom.innerHTML += `
         <div class="card">
           <div class="image-wrapper">
@@ -496,6 +509,7 @@
           </div>
           <div class="name">${it.name}</div>
           <div class="item-meta"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
+           ${diskLabel ? `<div class="item-meta" style="color:#ff5874;font-weight:600;"><span>${diskLabel}</span></div>` : ''}
           <button class="${actionClass}" onclick="${actionHandler}">${actionLabel}</button>
         </div>
       `;
