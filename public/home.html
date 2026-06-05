@@ -504,6 +504,10 @@
     if (page === currentPage) return;
     currentPage = page;
     filterAndRenderItems();
+    const itemsSection = document.getElementById('items');
+    if (itemsSection) {
+      itemsSection.scrollIntoView({  block: 'start' });
+    }
   }
 
   function switchCategory(evt, category) {
