@@ -129,7 +129,7 @@
   <!-- 顶部信息 -->
   <div class="top">
     <div class="user-name">用户：<span id="user">-</span></div>
-    <div class="user-note">每日持续更新ing！资源不断补充，记得常回来看看～</div>
+    <div class="user-note">兄弟们，网站不运营了，全部链接免费，赶紧保存！</div>
     <!--
     <button class="small-btn" onclick="showGuide()">🌍 原版导航</button>
     -->
@@ -215,7 +215,7 @@
     </div>
     <div class="modal-body">
       <h3>公告</h3>
-      <div class="link">本网站为个人兴趣所搭建，用于分享个人整理资源，各位有什么想要的资源或者想法可以在留言板块留言。网站处于初步阶段，资源会持续更新！剪辑版指的是把平时需要跳过的部分都删除了，只剩打桩部分，并且把整个系列整合到一个视频，直接全程起飞</div>
+      <div class="link">兄弟们，网站不运营了，全部链接免费，有时间就全部保存一下，过段时间就关闭了。</div>
     </div>
   </div>
 </div>
@@ -539,10 +539,10 @@
         }
       }
       const labelHtml = availableLabels.map(label => `<span class="label-badge">${label}</span>`).join('');
-      const purchasedTypes = (boughtMap[it.id] || []).filter(t => it[`link_${t}`] && it[`link_${t}`].toString().trim() !== '');
-      const actionLabel = purchasedTypes.length > 0 ? '链接' : '购买';
-      const actionClass = purchasedTypes.length > 0 ? 'btn-bought' : 'buy-btn';
-      const actionHandler = purchasedTypes.length > 0 ? `showItemLinks(${it.id})` : `showBuyOptions(${it.id})`;
+      const actionLabel = availableLabels.length > 0 ? '链接' : '暂无链接';
+      const actionClass = availableLabels.length > 0 ? 'btn-bought' : 'buy-btn';
+      const actionHandler = `showItemLinks(${it.id})`;
+      const actionDisabled = availableLabels.length === 0 ? 'disabled' : '';
 
       const lengthLabel = it.type === 'video'
         ? `${it.length || '-'}`
@@ -572,7 +572,7 @@
           <div class="name">${it.name}</div>
           <div class="item-meta"><span>${lengthLabel}</span><span>${sizeLabel}</span></div>
            ${diskLabel ? `<div class="item-meta" style="color:#ff5874;font-weight:600;"><span>${diskLabel}</span></div>` : ''}
-          <button class="${actionClass}" onclick="${actionHandler}">${actionLabel}</button>
+          <button class="${actionClass}" onclick="${actionHandler}" ${actionDisabled}>${actionLabel}</button>
         </div>
       `;
     });
@@ -609,30 +609,22 @@
     buy(itemId, selected.type);
   }
 
-  async function showItemLinks(itemId) {
-    if (!user) {
-      if (confirm('用户未登录，是否前往登录/注册？')) location.href = '/register.html';
-      return;
-    }
-    const r = await fetch("/api/items");
-    const data = await r.json();
-    const item = data.items.find(i => i.id == itemId);
+  function showItemLinks(itemId) {
+    const item = allItems.find(i => i.id == itemId);
     if (!item) return alert('商品不存在');
-    const linkTypeLabels = ['百度盘', '迅雷盘'];
-    const purchasedTypes = (boughtMap[itemId] || []).filter(t => item[`link_${t}`] && item[`link_${t}`].toString().trim() !== '');
-    if (purchasedTypes.length === 0) return alert('尚未购买任何链接');
-    const html = purchasedTypes.map(t => {
+    const labels = ['原版', '剪辑版', '破解'];
+    let html = '';
+    for (let t = 1; t <= 3; t++) {
       const link1 = item[`link_${t}`];
       const link2 = item[`link_${t}_2`];
-      let typeHtml = '';
       if (link1 && link1.toString().trim() !== '') {
-        typeHtml += `<div>${linkTypeLabels[0]}：<br>${link1}</div>`;
+        html += `<div style="margin-bottom:12px;"><strong>${labels[t-1]} - 百度盘：</strong><br>${link1}</div>`;
       }
       if (link2 && link2.toString().trim() !== '') {
-        typeHtml += `<div>${linkTypeLabels[1]}：<br>${link2}</div>`;
+        html += `<div style="margin-bottom:12px;"><strong>${labels[t-1]} - 迅雷盘：</strong><br>${link2}</div>`;
       }
-      return typeHtml;
-    }).join('');
+    }
+    if (!html) return alert('暂无可用链接');
     document.getElementById("linkText").innerHTML = html;
     document.getElementById("linkModal").style.display = "flex";
   }
